@@ -2,6 +2,7 @@
   "name": "cli-templater",
   "module": "index.ts",
   "type": "module",
+  "version": "0.0.1",
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@types/bun": "latest",
@@ -16,14 +17,19 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.2.3",
+    "@types/figlet": "^1.7.0",
     "ansis": "^3.9.0",
     "commander": "^13.1.0",
     "eslint-config-prettier": "^10.0.1",
     "figlet": "^1.8.0",
     "prettier": "^3.4.2"
   },
+  "bin": {
+    "cli-templater": "dist/index.js"
+  },
+  "main": "dist/index.js",
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc"
+    "build": "tsc && bun unlink && bun link"
   }
 }

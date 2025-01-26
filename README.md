@@ -38,3 +38,4 @@ We are using bun to run project scripts and the husky pre-commit script: if you 
   - `bun add ansis`
 - Figlet: used to create nice looking ascii art
   - `bun add figlet`
+  - `bun add --save-dev @types/figlet`

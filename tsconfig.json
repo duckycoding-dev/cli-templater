@@ -23,7 +23,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
-    
+
     // custom
     "noImplicitAny": true,
     "outDir": "./dist",
@@ -34,12 +34,10 @@
     },
     "declarationDir": "./dist/types",
     "declaration": true,
-    "sourceMap": true,
+    "sourceMap": true
   },
-  "include": [
-    "./src/*"
-  ],
+  "include": ["./src/*"],
   "exclude": [
-      "./dist/**/*" // This is what fixed it!
-  ],
+    "./dist/**/*" // This is what fixed it!
+  ]
 }

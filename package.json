@@ -15,11 +15,14 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.2.3",
+    "ansis": "^3.9.0",
+    "commander": "^13.1.0",
     "eslint-config-prettier": "^10.0.1",
+    "figlet": "^1.8.0",
     "prettier": "^3.4.2"
   },
   "scripts": {
-    "prepare": "husky",
     "dev": "tsc -w",
     "build": "tsc"
   }

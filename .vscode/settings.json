@@ -1,0 +1,38 @@
+{
+  "breadcrumbs.enabled": true,
+  "editor.autoClosingDelete": "never",
+  "editor.autoClosingBrackets": "beforeWhitespace",
+  "editor.autoClosingComments": "never",
+  "editor.autoClosingQuotes": "beforeWhitespace",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.hover.above": true,
+  "editor.hover.enabled": true,
+  "editor.hover.delay": 500,
+  "editor.inlineSuggest.enabled": true,
+  "editor.inlayHints.enabled": "on",
+  "editor.links": true,
+  "editor.matchBrackets": "never",
+  "editor.mouseWheelZoom": true,
+  "editor.parameterHints.enabled": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.stickyScroll.defaultModel": "foldingProviderModel",
+  "editor.tabCompletion": "on",
+  "workbench.tree.enableStickyScroll": true,
+
+  "css.completion.completePropertyWithSemicolon": true,
+  "css.hover.documentation": true,
+  "css.hover.references": true,
+  "css.format.spaceAroundSelectorSeparator": true,
+  "css.lint.propertyIgnoredDueToDisplay": "warning",
+
+  "html.autoClosingTags": true,
+  "html.format.indentInnerHtml": true,
+  "html.format.wrapLineLength": 0,
+  "html.hover.references": true,
+  "html.hover.documentation": true,
+
+  "typescript.preferences.quoteStyle": "single"
+}

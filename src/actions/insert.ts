@@ -1,8 +1,9 @@
 import { input, select, confirm } from '@inquirer/prompts';
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateFromTemplate } from '../utils';
+import { generateFromTemplate } from '../utils/utils';
 import ansis from 'ansis';
+import { TemplateProcessor } from '../utils/template/templateProcessor';
 
 export async function insertBoilerplate() {
   console.log('\n💡 Let’s set up your boilerplate!');
@@ -37,12 +38,14 @@ export async function insertBoilerplate() {
     },
   });
 
-  // Step 3: Choose framework template
-  const framework: string = await select({
-    message: 'Choose the framework template to use:',
-    choices: ['Hono', 'ExpressJS'],
-    default: 'Hono',
-  });
+  // Step 3: Choose template
+  const template = (
+    await select<string>({
+      message: 'Choose the template to use:',
+      choices: ['Hono', 'Express'],
+      default: 'Hono',
+    })
+  ).toLowerCase();
 
   // Step 4: Keep comments in generated files
   const keepComments = await confirm({
@@ -50,11 +53,17 @@ export async function insertBoilerplate() {
     default: false,
   });
 
-  // Step 5: Use Zod for validation
-  const useZod = await confirm({
-    message: 'Do you want to use Zod for validation?',
-    default: true,
-  });
+  // Step 5: Validation type
+  const { default: templateConfigsFromJson } = await import(
+    `@/templates/${template}/${template}.config.json`
+  );
+  const validationType = (
+    await select<string>({
+      message: 'Choose what type of validation to use:',
+      choices: templateConfigsFromJson.validatorSupport,
+      default: templateConfigsFromJson.validatorSupport[0],
+    })
+  ).toLowerCase();
 
   // Step 6: Generate types in separate file
   const separateTypes = await confirm({
@@ -80,20 +89,30 @@ export async function insertBoilerplate() {
   console.log('\n✅ Your selections:');
   console.log(`- Entity name: ${ansis.cyanBright(entityName)}`);
   console.log(`- Base directory: ${ansis.magentaBright(baseDir)}`);
-  console.log(`- Framework: ${ansis.cyanBright(framework)}`);
+  console.log(`- Template: ${ansis.cyanBright(template)}`);
   console.log(`- Remove comments: ${ansis.magentaBright(keepComments)}`);
-  console.log(`- Use Zod: ${ansis.cyanBright(useZod ? 'Yes' : 'No')}`);
+  console.log(`- Validation type: ${ansis.cyanBright(validationType)}`);
   if (separateTypes) {
     console.log(`- Types directory: ${ansis.magentaBright(typesDir)}`);
   } else {
     console.log('- Types saved in entity file');
   }
 
-  let boilerplateContent = '';
-  const { default: template } = await import(
-    `../templates/frameworks/${framework.toLowerCase()}`
-  );
-  boilerplateContent = generateFromTemplate(template, entityName, keepComments);
+  const processor = new TemplateProcessor();
+
+  processor.registerTemplate('hono', templateConfigsFromJson);
+  const generatedCode = await processor.processTemplate(template, {
+    removeComments: !keepComments,
+    entity: entityName,
+    validatorType: validationType,
+  });
+
+  console.log(generatedCode);
+  // let boilerplateContent = '';
+  // const { default: template } = await import(
+  //   `../templates/${framework.toLowerCase()/${framework.toLowerCase()}`
+  // );
+  // boilerplateContent = generateFromTemplate(template, entityName, keepComments);
 
   // Create the base directory and example files (if desired)
   const entityDir = path.join(baseDir, entityName);

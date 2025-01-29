@@ -1,0 +1,14 @@
+{
+  "name": "Zod Validator",
+  "description": "Zod schema validation for Hono",
+  "author": "Your Name",
+  "imports": [
+    "import { z } from 'zod';",
+    "import { zValidator } from '@hono/zod-validator';"
+  ],
+  "validationCode": "zValidator('json', schema)",
+  "dependencies": {
+    "@hono/zod-validator": "^0.4.2",
+    "zod": "^3.24.1"
+  }
+}

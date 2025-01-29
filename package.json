@@ -16,13 +16,20 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.4.2",
     "@inquirer/prompts": "^7.2.3",
     "@types/figlet": "^1.7.0",
+    "@types/pluralize": "^0.0.33",
     "ansis": "^3.9.0",
     "commander": "^13.1.0",
     "eslint-config-prettier": "^10.0.1",
     "figlet": "^1.8.0",
-    "prettier": "^3.4.2"
+    "hono": "^4.6.19",
+    "i": "^0.3.7",
+    "npm": "^11.0.0",
+    "pluralize": "^8.0.0",
+    "prettier": "^3.4.2",
+    "zod": "^3.24.1"
   },
   "bin": {
     "cli-templater": "dist/index.js"
@@ -30,6 +37,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc && bun unlink && bun link"
+    "build": "tsc && bun unlink && bun link",
+    "start": "bun dist/index.js"
   }
 }

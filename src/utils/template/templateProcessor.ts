@@ -1,48 +1,64 @@
+import { z } from 'zod';
+import pluralize from 'pluralize';
+import { importTemplate } from './imports';
+
 // import type { ProcessingHook } from './types';
 
-type ValidatorConfig = {
-  name: string;
-  description: string;
-  author: string;
-  imports: string[];
-  validationCode: string;
-  dependencies: Record<string, string>;
-};
+export const ValidatorConfigSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  author: z.string(),
+  imports: z.array(z.string()),
+  validationCode: z.string(),
+  dependencies: z.record(z.string(), z.string()),
+});
 
-type TemplateDefinition = {
-  name: string;
-  description: string;
-  version: string;
-  author: string;
-  tags: string[];
-  validatorSupport: string[];
-  filename: string;
-};
+export const TemplateConfigSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  version: z.string(),
+  author: z.string(),
+  tags: z.array(z.string()),
+  validatorSupport: z.array(z.string()),
+  filename: z.string(),
+});
 
-type ProcessingOptions = {
-  entity: string;
-  removeComments: boolean;
-  validatorType?: string;
-  customOptions?: Record<string, unknown>;
-};
+export const ProcessingOptionsSchema = z.object({
+  entity: z
+    .string()
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      'Invalid entity name. Must start with a letter and contain only letters, numbers and underscores',
+    ),
+  removeComments: z.boolean(),
+  validatorType: z.string().optional(),
+  customOptions: z.record(z.unknown()).optional(),
+});
+
+export type ValidatorConfig = z.infer<typeof ValidatorConfigSchema>;
+export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
+export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+type ProcessingHook = Function;
 
 export class TemplateProcessor {
-  private templates: Map<string, TemplateDefinition>;
+  private templates: Map<string, TemplateConfig>;
   private validators: Map<string, ValidatorConfig>;
-  // private hooks: Map<string, ProcessingHook[]>;
+  private hooks: Map<string, ProcessingHook[]>;
 
   constructor() {
     this.templates = new Map();
     this.validators = new Map();
-    // this.hooks = new Map();
+    this.hooks = new Map();
 
     // Register built-in processing hooks
-    // this.registerHook('pre-process', this.validateOptions);
-    // this.registerHook('post-process', this.formatCode);
+    this.registerHook('pre-process', this.validateOptions);
+    this.registerHook('post-process', this.formatCode);
   }
 
   /** Registers a new template */
-  registerTemplate(name: string, template: TemplateDefinition) {
+  registerTemplate(name: string, template: TemplateConfig) {
     if (this.templates.has(name)) {
       console.warn(`Template "${name}" already exists and will be overwritten`);
     }
@@ -60,12 +76,8 @@ export class TemplateProcessor {
   }
 
   /** Reads a template file and returns the content */
-  private async loadTemplate(template: TemplateDefinition): Promise<string> {
-    const file = await import(
-      `@/templates/${template.filename.toLowerCase()}/${template.filename.toLowerCase()}`
-    );
-
-    return file.default;
+  private async loadTemplate(templateName: string): Promise<string> {
+    return await importTemplate(templateName);
   }
 
   /** Processes a template with the given options */
@@ -77,15 +89,16 @@ export class TemplateProcessor {
     // await this.runHooks('pre-process', options);
 
     // 2. Fetch template and validator
-    const template = this.templates.get(templateName);
-    if (!template) {
+    const templateConfigs = this.templates.get(templateName);
+    if (!templateConfigs) {
       throw new Error(`Template "${templateName}" not found`);
     }
 
-    let rawTemplate = await this.loadTemplate(template);
-    const validator = options.validatorType
-      ? this.validators.get(options.validatorType)
-      : undefined;
+    let rawTemplate = await this.loadTemplate(templateConfigs.filename);
+    const validator =
+      options.validatorType && options.validatorType !== 'none'
+        ? this.validators.get(options.validatorType)
+        : undefined;
 
     // 3. Inject validator-specific code
     if (validator) {
@@ -93,31 +106,40 @@ export class TemplateProcessor {
     }
 
     // 4. Perform entity replacements
-    const processedCode = this.replacePlaceholders(rawTemplate, options);
+    let processedCode = this.replacePlaceholders(rawTemplate, options);
 
     // 5. Run post-processing hooks
-    // processedCode = await this.runHooks('post-process', processedCode, options);
+    processedCode = await this.runHooks('post-process', processedCode, options);
 
     return processedCode;
   }
 
+  /** Registers a processing hook */
+  private registerHook(phase: string, hook: ProcessingHook) {
+    const hooks = this.hooks.get(phase) || [];
+    hooks.push(hook);
+    this.hooks.set(phase, hooks);
+  }
+
   /** Runs all hooks for a given phase */
-  // private async runHooks(phase: string, input: any, options?: ProcessingOptions) {
-  //   const hooks = this.hooks.get(phase) || [];
-  //   for (const hook of hooks) {
-  //     input = await hook(input, options);
-  //   }
-  //   return input;
-  // }
+  private async runHooks<T>(
+    phase: string,
+    input: T,
+    options?: ProcessingOptions,
+  ) {
+    const hooks = this.hooks.get(phase) || [];
+    for (const hook of hooks) {
+      input = await hook(input, options);
+    }
+    return input;
+  }
 
   /** Ensures valid options before processing */
   private async validateOptions(options: ProcessingOptions) {
-    if (!options.entity) {
-      throw new Error('Entity name is required');
-    }
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(options.entity)) {
+    const parsed = ProcessingOptionsSchema.safeParse(options);
+    if (parsed.error) {
       throw new Error(
-        'Invalid entity name. Must start with a letter and contain only letters and numbers',
+        'Options are not valid; ' + parsed.error.errors.join(', '),
       );
     }
   }
@@ -127,12 +149,14 @@ export class TemplateProcessor {
     template: string,
     options: ProcessingOptions,
   ): string {
+    const formattedEntity = options.entity.toLowerCase();
+
     const entityCapitalized =
-      options.entity.charAt(0).toUpperCase() + options.entity.slice(1);
-    const entityPlural = `${options.entity}s`; // Basic pluralization
+      formattedEntity.charAt(0).toUpperCase() + formattedEntity.slice(1);
+    const entityPlural = pluralize(formattedEntity);
 
     return template
-      .replace(/\{\{entity\}\}/g, options.entity)
+      .replace(/\{\{entity\}\}/g, formattedEntity)
       .replace(/\{\{Entity\}\}/g, entityCapitalized)
       .replace(/\{\{entities\}\}/g, entityPlural);
   }
@@ -152,31 +176,30 @@ export class TemplateProcessor {
 
   /** Formats generated code (removes comments if required) */
   private async formatCode(
-    code: string,
+    text: string,
     options: ProcessingOptions,
   ): Promise<string> {
     if (options.removeComments) {
-      return code
-        .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '') // Remove multi-line and inline comments
-        .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
+      return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // Remove multi-line and inline comments
+      // .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
     }
-    return code;
+    return text;
   }
 
   /** Returns available templates */
-  getAvailableTemplates(): string[] {
+  getAvailableTemplatesNames(): string[] {
     return Array.from(this.templates.keys());
   }
 
   /** Returns available validators */
-  getAvailableValidators(): string[] {
+  getAvailableValidatorsNames(): string[] {
     return Array.from(this.validators.keys());
   }
 
   /** Returns template metadata */
-  getTemplateInfo(name: string) {
+  getTemplateConfigs(name: string): TemplateConfig | undefined {
     const template = this.templates.get(name);
-    if (!template) return null;
+    if (!template) return undefined;
 
     return {
       name: template.name,
@@ -185,6 +208,13 @@ export class TemplateProcessor {
       author: template.author,
       tags: template.tags,
       validatorSupport: template.validatorSupport,
+      filename: template.filename,
     };
   }
 }
+
+// need to improve the pluralization of entities with underlines
+// - need to consider the case where they are used as URL paths: here they must keep the underscores
+// - need to consider the case where they are used as class names: here they must be transformed to camel/pascal case and have no underscores
+
+// need to improve the replacement logic for placeholders for validation

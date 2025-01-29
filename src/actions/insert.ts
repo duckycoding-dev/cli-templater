@@ -1,15 +1,18 @@
 import { input, select, confirm } from '@inquirer/prompts';
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateFromTemplate } from '../utils/utils';
 import ansis from 'ansis';
 import { TemplateProcessor } from '../utils/template/templateProcessor';
+import {
+  importTemplateConfigs,
+  importValidatorConfigs,
+} from '../utils/template/imports';
 
 export async function insertBoilerplate() {
   console.log('\n💡 Let’s set up your boilerplate!');
 
   // Step 1: Get entity name
-  const entityName = await input({
+  const chosenEntityName = await input({
     message: 'Enter the entity name:',
     default: 'entity',
     validate: (input) => {
@@ -27,7 +30,7 @@ export async function insertBoilerplate() {
   });
 
   // Step 2: Get base directory
-  const baseDir = await input({
+  const chosenBaseDir = await input({
     message: 'Enter the base directory:',
     default: './src/',
     validate: (input) => {
@@ -39,7 +42,7 @@ export async function insertBoilerplate() {
   });
 
   // Step 3: Choose template
-  const template = (
+  const chosenTemplate = (
     await select<string>({
       message: 'Choose the template to use:',
       choices: ['Hono', 'Express'],
@@ -54,14 +57,13 @@ export async function insertBoilerplate() {
   });
 
   // Step 5: Validation type
-  const { default: templateConfigsFromJson } = await import(
-    `@/templates/${template}/${template}.config.json`
-  );
-  const validationType = (
+  const templateConfigs = await importTemplateConfigs(chosenTemplate);
+
+  const chosenValidationType = (
     await select<string>({
       message: 'Choose what type of validation to use:',
-      choices: templateConfigsFromJson.validatorSupport,
-      default: templateConfigsFromJson.validatorSupport[0],
+      choices: templateConfigs.validatorSupport,
+      default: templateConfigs.validatorSupport[0],
     })
   ).toLowerCase();
 
@@ -87,11 +89,11 @@ export async function insertBoilerplate() {
 
   // Output the collected data (or implement the boilerplate generation logic)
   console.log('\n✅ Your selections:');
-  console.log(`- Entity name: ${ansis.cyanBright(entityName)}`);
-  console.log(`- Base directory: ${ansis.magentaBright(baseDir)}`);
-  console.log(`- Template: ${ansis.cyanBright(template)}`);
+  console.log(`- Entity name: ${ansis.cyanBright(chosenEntityName)}`);
+  console.log(`- Base directory: ${ansis.magentaBright(chosenBaseDir)}`);
+  console.log(`- Template: ${ansis.cyanBright(chosenTemplate)}`);
   console.log(`- Remove comments: ${ansis.magentaBright(keepComments)}`);
-  console.log(`- Validation type: ${ansis.cyanBright(validationType)}`);
+  console.log(`- Validation type: ${ansis.cyanBright(chosenValidationType)}`);
   if (separateTypes) {
     console.log(`- Types directory: ${ansis.magentaBright(typesDir)}`);
   } else {
@@ -100,11 +102,19 @@ export async function insertBoilerplate() {
 
   const processor = new TemplateProcessor();
 
-  processor.registerTemplate('hono', templateConfigsFromJson);
-  const generatedCode = await processor.processTemplate(template, {
+  processor.registerTemplate(chosenTemplate, templateConfigs);
+
+  if (chosenValidationType && chosenValidationType !== 'none') {
+    const validatorConfigs = await importValidatorConfigs(
+      chosenTemplate,
+      chosenValidationType,
+    );
+    processor.registerValidator(chosenValidationType, validatorConfigs);
+  }
+  const generatedCode = await processor.processTemplate(chosenTemplate, {
     removeComments: !keepComments,
-    entity: entityName,
-    validatorType: validationType,
+    entity: chosenEntityName,
+    validatorType: chosenValidationType,
   });
 
   console.log(generatedCode);
@@ -115,7 +125,7 @@ export async function insertBoilerplate() {
   // boilerplateContent = generateFromTemplate(template, entityName, keepComments);
 
   // Create the base directory and example files (if desired)
-  const entityDir = path.join(baseDir, entityName);
+  const entityDir = path.join(chosenBaseDir, chosenEntityName);
   if (!fs.existsSync(entityDir)) {
     // fs.mkdirSync(entityDir, { recursive: true });
     console.log(`\n📂 Created directory: ${entityDir}`);

@@ -13,7 +13,7 @@ export default [
   {
     rules: {
       'no-console': 'off',
-      'no-unused-vars': 'warn',
+      'no-unused-vars': 'off', // Disable the base rule and use the TypeScript version instead
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },

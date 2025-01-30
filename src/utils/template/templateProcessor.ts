@@ -39,18 +39,35 @@ export type ValidatorConfig = z.infer<typeof ValidatorConfigSchema>;
 export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-type ProcessingHook = Function;
+type HookType = 'pre-process' | 'post-process';
+type PreProcessHook = (options: ProcessingOptions) => void | Promise<void>;
+type PostProcessHook = (
+  code: string,
+  options: ProcessingOptions,
+) => string | Promise<string>;
+
+/** Mapping hook types to their corresponding function signatures */
+type HookTypeMapping = {
+  'pre-process': PreProcessHook[];
+  'post-process': PostProcessHook[];
+};
+
+type HookMapping = {
+  [K in HookType]: HookTypeMapping[K];
+};
 
 export class TemplateProcessor {
   private templates: Map<string, TemplateConfig>;
   private validators: Map<string, ValidatorConfig>;
-  private hooks: Map<string, ProcessingHook[]>;
+  private hooks: HookMapping;
 
   constructor() {
     this.templates = new Map();
     this.validators = new Map();
-    this.hooks = new Map();
+    this.hooks = {
+      'pre-process': [],
+      'post-process': [],
+    };
 
     // Register built-in processing hooks
     this.registerHook('pre-process', this.validateOptions);
@@ -80,58 +97,46 @@ export class TemplateProcessor {
     return await importTemplate(templateName);
   }
 
-  /** Processes a template with the given options */
-  async processTemplate(
-    templateName: string,
-    options: ProcessingOptions,
-  ): Promise<string> {
-    // 1. Run pre-processing hooks
-    // await this.runHooks('pre-process', options);
-
-    // 2. Fetch template and validator
-    const templateConfigs = this.templates.get(templateName);
-    if (!templateConfigs) {
-      throw new Error(`Template "${templateName}" not found`);
-    }
-
-    let rawTemplate = await this.loadTemplate(templateConfigs.filename);
-    const validator =
-      options.validatorType && options.validatorType !== 'none'
-        ? this.validators.get(options.validatorType)
-        : undefined;
-
-    // 3. Inject validator-specific code
-    if (validator) {
-      rawTemplate = this.injectValidatorCode(rawTemplate, validator);
-    }
-
-    // 4. Perform entity replacements
-    let processedCode = this.replacePlaceholders(rawTemplate, options);
-
-    // 5. Run post-processing hooks
-    processedCode = await this.runHooks('post-process', processedCode, options);
-
-    return processedCode;
-  }
-
   /** Registers a processing hook */
-  private registerHook(phase: string, hook: ProcessingHook) {
-    const hooks = this.hooks.get(phase) || [];
-    hooks.push(hook);
-    this.hooks.set(phase, hooks);
+  private registerHook<T extends HookType>(
+    hookType: T,
+    hook: HookMapping[T][number],
+  ): void {
+    if (hookType === 'pre-process') {
+      this.hooks['pre-process'].push(hook as PreProcessHook);
+    } else {
+      this.hooks['post-process'].push(hook as PostProcessHook);
+    }
   }
 
-  /** Runs all hooks for a given phase */
-  private async runHooks<T>(
-    phase: string,
-    input: T,
+  async runHooks(
+    hookType: 'pre-process',
+    options: ProcessingOptions,
+  ): Promise<void>;
+  async runHooks(
+    hookType: 'post-process',
+    code: string,
+    options: ProcessingOptions,
+  ): Promise<string>;
+  async runHooks<T extends HookType>(
+    hookType: T,
+    input: T extends 'pre-process' ? ProcessingOptions : string,
     options?: ProcessingOptions,
-  ) {
-    const hooks = this.hooks.get(phase) || [];
-    for (const hook of hooks) {
-      input = await hook(input, options);
+  ): Promise<void | string> {
+    if (hookType === 'pre-process') {
+      const phaseHooks = this.hooks['pre-process'] ?? [];
+      for (const hook of phaseHooks) {
+        await hook(input as ProcessingOptions);
+      }
+      return;
+    } else {
+      const phaseHooks = this.hooks['post-process'] ?? [];
+      let code = input as string;
+      for (const hook of phaseHooks) {
+        code = await hook(code, options!);
+      }
+      return code;
     }
-    return input;
   }
 
   /** Ensures valid options before processing */
@@ -210,6 +215,40 @@ export class TemplateProcessor {
       validatorSupport: template.validatorSupport,
       filename: template.filename,
     };
+  }
+
+  /** Processes a template with the given options */
+  async processTemplate(
+    templateName: string,
+    options: ProcessingOptions,
+  ): Promise<string> {
+    // 1. Run pre-processing hooks
+    await this.runHooks('pre-process', options);
+
+    // 2. Fetch template and validator
+    const templateConfigs = this.templates.get(templateName);
+    if (!templateConfigs) {
+      throw new Error(`Template "${templateName}" not found`);
+    }
+
+    let rawTemplate = await this.loadTemplate(templateConfigs.filename);
+    const validator =
+      options.validatorType && options.validatorType !== 'none'
+        ? this.validators.get(options.validatorType)
+        : undefined;
+
+    // 3. Inject validator-specific code
+    if (validator) {
+      rawTemplate = this.injectValidatorCode(rawTemplate, validator);
+    }
+
+    // 4. Perform entity replacements
+    let processedCode = this.replacePlaceholders(rawTemplate, options);
+
+    // 5. Run post-processing hooks
+    processedCode = await this.runHooks('post-process', processedCode, options);
+
+    return processedCode;
   }
 }
 

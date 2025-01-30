@@ -38,16 +38,20 @@ program
 program
   .command('insert')
   .description('Insert boilerplate code by choosing from an existing template')
+  .option('-e, --entity <ENTITY NAME>', 'Set default entity name to use')
+  .option('-t, --template <TEMPLATE NAME>', 'Set default template to use')
+  .option('-v, --validator <VALIDATOR NAME>', 'Set default validator to use')
+  .option('--kc, --keepComments', 'Keep comments in generated files')
   .option('-d, --debug', 'output extra debugging')
   .action(function () {
-    const args = this.args;
     const opts = this.opts();
-    console.log(args);
-    console.log(opts);
-    // const insertAction = new InsertAction(args, opts);
-    // insertAction.insert();
 
-    insertBoilerplate();
+    insertBoilerplate({
+      entity: opts.entity,
+      template: opts.template?.toLowerCase(),
+      removeComments: !opts.keepComments,
+      validatorType: opts.validator?.toLowerCase(),
+    });
   });
 
 program.parse(process.argv);

@@ -18,22 +18,37 @@ export async function insertBoilerplate(
   console.log('\n💡 Let’s set up your boilerplate!');
 
   // Step 1: Get entity name
-  const chosenEntityName = await input({
-    message: 'Enter the entity name:',
-    default: options.entity || 'entity',
-    validate: (input) => {
-      if (input.trim() === '') {
-        return 'Entity name cannot be empty';
-      }
-      if (!/^[a-zA-Z0-9_]+$/.test(input)) {
-        return 'Entity name must only contain letters, numbers, and underscores';
-      }
-      if (/^[0-9]/.test(input)) {
-        return 'Entity name must not start with a number';
-      }
-      return true;
-    },
-  });
+  if (options.entity) {
+    if (options.entity.trim() === '') {
+      throw new Error('Entity name cannot be empty');
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(options.entity)) {
+      throw new Error(
+        'Entity name must only contain letters, numbers, and underscores',
+      );
+    }
+    if (/^[0-9]/.test(options.entity)) {
+      throw new Error('Entity name must not start with a number');
+    }
+  }
+  const chosenEntityName =
+    options.entity ||
+    (await input({
+      message: 'Enter the entity name:',
+      default: options.entity || 'entity',
+      validate: (input) => {
+        if (input.trim() === '') {
+          return 'Entity name cannot be empty';
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(input)) {
+          return 'Entity name must only contain letters, numbers, and underscores';
+        }
+        if (/^[0-9]/.test(input)) {
+          return 'Entity name must not start with a number';
+        }
+        return true;
+      },
+    }));
 
   // Step 2: Get base directory
   const chosenBaseDir = await input({
@@ -55,48 +70,49 @@ export async function insertBoilerplate(
   });
 
   if (templateChoices.length === 0) {
-    console.error('No templates found in the templates directory');
-    process.exit(1);
+    throw new Error('No templates found in the templates directory');
   }
 
-  const chosenTemplate = (
-    await select<string>({
-      message: 'Choose the template to use:',
-      choices: templateChoices,
-      default:
-        options.template && templateChoices.includes(options.template)
-          ? options.template
-          : templateChoices[0],
-    })
-  ).toLowerCase();
+  const chosenTemplate =
+    options.template && templateChoices.includes(options.template)
+      ? options.template
+      : (
+          await select<string>({
+            message: 'Choose the template to use:',
+            choices: templateChoices,
+            default: templateChoices[0],
+          })
+        ).toLowerCase();
+
   let templateConfigs: TemplateConfig;
   try {
     templateConfigs = await importTemplateConfigs(chosenTemplate);
   } catch (err) {
-    console.error(
+    throw new Error(
       `Error importing template configs:\n${(err as Error).message}`,
     );
-    process.exit(1);
   }
 
   // Step 4: Keep comments in generated files
-  const keepComments = await confirm({
-    message: 'Do you want to keep comments in generated files?',
-    default: !options.removeComments || false,
-  });
+  const keepComments =
+    !options.removeComments ||
+    (await confirm({
+      message: 'Do you want to keep comments in generated files?',
+      default: false,
+    }));
 
   // Step 5: Validation type
-  const chosenValidationType = (
-    await select<string>({
-      message: 'Choose what type of validation to use:',
-      choices: templateConfigs.validatorSupport,
-      default:
-        options.validatorType &&
-        templateConfigs.validatorSupport.includes(options.validatorType)
-          ? options.validatorType
-          : templateConfigs.validatorSupport[0],
-    })
-  ).toLowerCase();
+  const chosenValidationType =
+    options.validatorType &&
+    templateConfigs.validatorSupport.includes(options.validatorType)
+      ? options.validatorType
+      : (
+          await select<string>({
+            message: 'Choose what type of validation to use:',
+            choices: templateConfigs.validatorSupport,
+            default: templateConfigs.validatorSupport[0],
+          })
+        ).toLowerCase();
 
   // Step 6: Generate types in separate file
   const separateTypes = await confirm({
@@ -145,10 +161,9 @@ export async function insertBoilerplate(
       );
       processor.registerValidator(chosenValidationType, validatorConfigs);
     } catch (err) {
-      console.error(
+      throw new Error(
         `Error importing validator configs:\n${(err as Error).message}`,
       );
-      process.exit(1);
     }
   }
   let generatedCode: string;
@@ -160,19 +175,35 @@ export async function insertBoilerplate(
       validatorType: chosenValidationType,
     });
   } catch (err) {
-    console.error(`Error processing template:\n${(err as Error).message}`);
-    process.exit(1);
+    throw new Error(`Error processing template:\n${(err as Error).message}`);
   }
 
   console.log(generatedCode);
 
   // Create the base directory and example files (if desired)
+
+  if (!fs.existsSync(chosenBaseDir)) {
+    console.error(`⚠️ Directory "${chosenBaseDir}" does not exist.`);
+    const shouldCreate = await confirm({
+      message: 'Create it?',
+      default: true,
+    });
+    if (shouldCreate) fs.mkdirSync(chosenBaseDir, { recursive: true });
+    else process.exit(1);
+  }
+
   const entityDir = path.join(chosenBaseDir, chosenEntityName);
   if (!fs.existsSync(entityDir)) {
     // fs.mkdirSync(entityDir, { recursive: true });
     console.log(`\n📂 Created directory: ${entityDir}`);
   } else {
-    console.log(`\n⚠️ Directory already exists: ${entityDir}`);
+    console.log(`\n⚠️ Template already exists: ${entityDir}`);
+    const shouldOverwrite = await confirm({
+      message: 'Do you want to overwrite the existing template?',
+      default: false,
+    });
+    if (!shouldOverwrite) process.exit(1);
+    // fs.mkdirSync(entityDir, { recursive: true });
   }
 
   // const boilerplateFile = path.join(entityDir, `${entityName}.ts`);

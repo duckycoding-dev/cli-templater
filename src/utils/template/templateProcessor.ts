@@ -2,8 +2,6 @@ import { z } from 'zod';
 import pluralize from 'pluralize';
 import { importTemplate } from './imports';
 
-// import type { ProcessingHook } from './types';
-
 export const ValidatorConfigSchema = z.object({
   name: z.string(),
   description: z.string(),

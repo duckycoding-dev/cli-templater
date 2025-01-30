@@ -43,15 +43,22 @@ program
   .option('-v, --validator <VALIDATOR NAME>', 'Set default validator to use')
   .option('--kc, --keepComments', 'Keep comments in generated files')
   .option('-d, --debug', 'output extra debugging')
-  .action(function () {
+  .action(async function () {
     const opts = this.opts();
 
-    insertBoilerplate({
+    const formattedOptions = {
       entity: opts.entity,
       template: opts.template?.toLowerCase(),
       removeComments: !opts.keepComments,
       validatorType: opts.validator?.toLowerCase(),
-    });
+    };
+
+    try {
+      await insertBoilerplate({ ...formattedOptions });
+    } catch (err) {
+      console.error(`❌ ${(err as Error).message}`);
+      process.exit(1);
+    }
   });
 
 program.parse(process.argv);

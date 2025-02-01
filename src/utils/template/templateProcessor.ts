@@ -1,12 +1,88 @@
 import { z } from 'zod';
 import pluralize from 'pluralize';
-import { importTemplate } from '../imports';
+import { importTemplate, importTypesTemplate } from '../imports';
 import {
   ValidatorProcessor,
   type ValidatorConfig,
 } from '../validator/validatorProcessor';
 
-const templatePlaceholderSchema = z.record(
+/*
+ * These placeholders will always be handled by the template processor in a special way
+ * and are available in all templates
+ * If the user provides a placeholder with the same name, it will override these
+ * Thus, if the user wants to make these placeholders NOT optional, they should set `required` to `true`
+ */
+const DEFAULT_TEMPLATE_PLACEHOLDERS = [
+  {
+    entity: {
+      description: 'The name of the entity, camelCase format',
+      required: false,
+    },
+  },
+  {
+    entities: {
+      description: 'The name of the entity in plural form, camelCase format',
+      required: false,
+    },
+  },
+  {
+    Entity: {
+      description: 'The name of the entity in PascalCase',
+      required: false,
+    },
+  },
+  {
+    Entities: {
+      description: 'The name of the entity in plural form, in PascalCase',
+      required: false,
+    },
+  },
+  {
+    entity_: {
+      description: 'The name of the entity, snake_case format',
+      required: false,
+    },
+  },
+  {
+    entities_: {
+      description: 'The name of the entity in plural form, snake_case format',
+      required: false,
+    },
+  },
+  {
+    ENTITY_: {
+      description: 'The name of the entity, SCREAMING_SNAKE_CASE format',
+      required: false,
+    },
+  },
+  {
+    ENTITIES_: {
+      description:
+        'The name of the entity in plural form, SCREAMING_SNAKE_CASE format',
+      required: false,
+    },
+  },
+  {
+    'entity-': {
+      description: 'The name of the entity, kebab-case format',
+      required: false,
+    },
+  },
+  {
+    'entities-': {
+      description: 'The name of the entity in plural form, kebab-case format',
+      required: false,
+    },
+  },
+  {
+    types: {
+      description: 'Types definitions for the entity',
+      required: false,
+    },
+  },
+] as const satisfies TemplatePlaceholderSchema[];
+
+const TemplatePlaceholderSchema = z.record(
   z.string(),
   z.object({
     description: z.string().optional(),
@@ -22,7 +98,7 @@ export const TemplateConfigSchema = z
     description: z.string().optional(),
     tags: z.array(z.string()).optional(),
     version: z.string(),
-    placeholders: z.array(templatePlaceholderSchema).default([]),
+    placeholders: z.array(TemplatePlaceholderSchema).default([]),
     files: z
       .array(
         z.object({
@@ -47,12 +123,15 @@ export const ProcessingOptionsSchema = z.object({
       'Invalid entity name. Must start with a letter and contain only letters, numbers and underscores',
     ),
   removeComments: z.boolean(),
-  validatorType: z.string().optional(),
-  customOptions: z.record(z.unknown()).optional(),
+  validatorType: z.string(),
+  separateTypes: z.boolean(),
 });
 
 export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
+export type TemplatePlaceholderSchema = z.infer<
+  typeof TemplatePlaceholderSchema
+>;
 
 type HookType = 'pre-process' | 'post-process';
 type PreProcessHook = (options: ProcessingOptions) => void | Promise<void>;
@@ -75,6 +154,9 @@ export class TemplateProcessor {
   private templates: Map<string, TemplateConfig>;
   private validators: Map<string, ValidatorConfig>;
   private hooks: HookMapping;
+  private typesFileContent?: string;
+  private mainFileContent?: string;
+  private rawTemplate?: string;
 
   constructor() {
     this.templates = new Map();
@@ -168,20 +250,48 @@ export class TemplateProcessor {
   }
 
   /** Replaces placeholders in the template string */
-  private replacePlaceholders(
+  private replaceDefaultEntityNamePlaceholders(
     template: string,
-    options: ProcessingOptions,
+    entityName: string,
   ): string {
-    const formattedEntity = options.entity.toLowerCase();
+    const formattedEntitySnakeCase = entityName
+      .toLowerCase()
+      .replace(/(?:\s*\s)+/g, '_');
+    const formattedEntityScreamingSnakeCase =
+      formattedEntitySnakeCase.toUpperCase();
+    const formattedEntityKebabCase = formattedEntitySnakeCase.replaceAll(
+      '_',
+      '-',
+    );
+    const formattedEntityCamelCase = formattedEntitySnakeCase.replace(
+      /(_\w)/g,
+      (match) => match[1].toUpperCase(),
+    );
+    const formattedEntityPascalCase =
+      formattedEntityCamelCase.charAt(0).toUpperCase() +
+      formattedEntityCamelCase.slice(1);
 
-    const entityCapitalized =
-      formattedEntity.charAt(0).toUpperCase() + formattedEntity.slice(1);
-    const entityPlural = pluralize(formattedEntity);
+    const formattedEntityCamelCasePlural = pluralize(formattedEntityCamelCase);
+    const formattedEntityPascalCasePlural = pluralize(
+      formattedEntityPascalCase,
+    );
+    const formattedEntityKebabCasePlural = pluralize(formattedEntityKebabCase);
+    const formattedEntitySnakeCasePlural = pluralize(formattedEntitySnakeCase);
+    const formattedEntityScreamingSnakeCasePlural = pluralize(
+      formattedEntityScreamingSnakeCase,
+    );
 
     return template
-      .replace(/\{\{entity\}\}/g, formattedEntity)
-      .replace(/\{\{Entity\}\}/g, entityCapitalized)
-      .replace(/\{\{entities\}\}/g, entityPlural);
+      .replace(/\{\{entity\}\}/g, formattedEntityCamelCase)
+      .replace(/\{\{entities\}\}/g, formattedEntityCamelCasePlural)
+      .replace(/\{\{Entity\}\}/g, formattedEntityPascalCase)
+      .replace(/\{\{Entities\}\}/g, formattedEntityPascalCasePlural)
+      .replace(/\{\{entity_\}\}/g, formattedEntitySnakeCase)
+      .replace(/\{\{entities_\}\}/g, formattedEntitySnakeCasePlural)
+      .replace(/\{\{ENTITY_\}\}/g, formattedEntityScreamingSnakeCase)
+      .replace(/\{\{ENTITIES_\}\}/g, formattedEntityScreamingSnakeCasePlural)
+      .replace(/\{\{entity-\}\}/g, formattedEntityKebabCase)
+      .replace(/\{\{entities-\}\}/g, formattedEntityKebabCasePlural);
   }
 
   /** Injects validator-specific imports and validation code */
@@ -193,6 +303,24 @@ export class TemplateProcessor {
     return validator.processValidator(template);
   }
 
+  /** Injects types */
+  private async injectTypes(templateName: string, options: ProcessingOptions) {
+    let typesCode = '';
+    const typesTemplate = await importTypesTemplate(templateName);
+    if (options.validatorType && options.validatorType !== 'none') {
+      typesCode = typesTemplate.defaultOutput ?? typesTemplate.fallback ?? '';
+    } else {
+      typesCode = typesTemplate.fallback ?? '';
+    }
+    if (options.separateTypes) {
+      // add types to separate new file
+      this.typesFileContent = typesCode;
+    } else {
+      // add types to main output file
+      this.rawTemplate = this.rawTemplate?.replace(/\{\{types\}\}/g, typesCode);
+    }
+  }
+
   /** Removes comments */
   private removeCommentsIfNeeded(
     text: string,
@@ -200,7 +328,6 @@ export class TemplateProcessor {
   ): string {
     if (options.removeComments) {
       return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // Remove multi-line and inline comments
-      // .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
     }
     return text;
   }
@@ -259,7 +386,7 @@ export class TemplateProcessor {
   async processTemplate(
     templateName: string,
     options: ProcessingOptions,
-  ): Promise<string> {
+  ): Promise<{ mainFileContent: string; typesFileContent?: string }> {
     // 1. Run pre-processing hooks
     await this.runHooks('pre-process', options);
 
@@ -269,7 +396,7 @@ export class TemplateProcessor {
       throw new Error(`Template "${templateName}" not found`);
     }
 
-    let rawTemplate = await this.loadTemplate(templateConfigs.filename);
+    this.rawTemplate = await this.loadTemplate(templateConfigs.filename);
     const validator =
       options.validatorType && options.validatorType !== 'none'
         ? this.validators.get(options.validatorType)
@@ -277,21 +404,34 @@ export class TemplateProcessor {
 
     // 3. Inject validator-specific code
     if (validator) {
-      rawTemplate = this.injectValidatorCode(rawTemplate, validator);
+      this.rawTemplate = this.injectValidatorCode(this.rawTemplate, validator);
     }
 
-    // 4. Perform entity replacements
-    let processedCode = this.replacePlaceholders(rawTemplate, options);
+    // 4. Inject types
+    await this.injectTypes(templateName, options);
 
-    // 5. Run post-processing hooks
-    processedCode = await this.runHooks('post-process', processedCode, options);
+    // 5. Perform entity replacements
+    this.rawTemplate = this.replaceDefaultEntityNamePlaceholders(
+      this.rawTemplate,
+      options.entity,
+    );
+    if (this.typesFileContent) {
+      this.typesFileContent = this.replaceDefaultEntityNamePlaceholders(
+        this.typesFileContent,
+        options.entity,
+      );
+    }
 
-    return processedCode;
+    // 6. Run post-processing hooks
+    this.mainFileContent = await this.runHooks(
+      'post-process',
+      this.rawTemplate,
+      options,
+    );
+
+    return {
+      mainFileContent: this.mainFileContent,
+      typesFileContent: this.typesFileContent,
+    };
   }
 }
-
-// need to improve the pluralization of entities with underlines
-// - need to consider the case where they are used as URL paths: here they must keep the underscores
-// - need to consider the case where they are used as class names: here they must be transformed to camel/pascal case and have no underscores
-
-// need to improve the replacement logic for placeholders for validation

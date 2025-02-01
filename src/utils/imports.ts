@@ -47,3 +47,15 @@ export async function importValidatorConfigs(
 
   return parsed.data;
 }
+
+export async function importTypesTemplate(
+  templateName: string,
+): Promise<{ defaultOutput: string; fallback: string }> {
+  const { default: defaultOutput, fallback } = await import(
+    `@/templates/${templateName}/${templateName}.types`
+  );
+  return {
+    defaultOutput,
+    fallback,
+  };
+}

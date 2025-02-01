@@ -166,19 +166,24 @@ export async function insertBoilerplateAction(
       );
     }
   }
-  let generatedCode: string;
+  let mainFileContent: string;
+  let typesFileContent: string | undefined;
 
   try {
-    generatedCode = await processor.processTemplate(chosenTemplate, {
-      removeComments: !keepComments,
-      entity: chosenEntityName,
-      validatorType: chosenValidationType,
-    });
+    const { mainFileContent: main, typesFileContent: types } =
+      await processor.processTemplate(chosenTemplate, {
+        removeComments: !keepComments,
+        entity: chosenEntityName,
+        validatorType: chosenValidationType,
+        separateTypes: separateTypes,
+      });
+    mainFileContent = main;
+    typesFileContent = types;
   } catch (err) {
     throw new Error(`Error processing template:\n${(err as Error).message}`);
   }
 
-  console.log(generatedCode);
+  console.log(mainFileContent);
 
   // Create the base directory and example files (if desired)
 
@@ -206,7 +211,12 @@ export async function insertBoilerplateAction(
     // fs.mkdirSync(entityDir, { recursive: true });
   }
 
-  // const boilerplateFile = path.join(entityDir, `${entityName}.ts`);
-  // fs.writeFileSync(boilerplateFile, generatedCode);
-  // console.log(`📝 Created boilerplate file: ${boilerplateFile}`);
+  // const mainFile = path.join(entityDir, `${entityName}.ts`);
+  // fs.writeFileSync(mainFile, mainFileContent);
+  // console.log(`📝 Created main file: ${mainFile}`);
+  if (separateTypes) {
+    // const typesFile = path.join(entityDir, `${entityName}.types.ts`);
+    // fs.writeFileSync(typesFile, typesFileContent);
+    // console.log(`📝 Created types file: ${typesFile}`);
+  }
 }

@@ -4,17 +4,17 @@ import { Hono } from 'hono';
 {{types}}
 
 export const {{entity}}Router = new Hono()
-  .get('/{{entities}}', async (c) => {
+  .get('/{{entities_}}', async (c) => {
     // Logic to get all {{entities}}
     return c.json({ message: 'Get all {{entities}}' });
   })
-  .post('/{{entities}}', {{validationBody}}, async (c) => {
+  .post('/{{entities_}}', {{validationBody}}, async (c) => {
     const {{entity}} = c.req.valid('json');
     // Logic to create a new {{entity}}
     return c.json({ message: '{{Entity}} created', {{entity}} });
   })
   .get(
-    '/{{entities}}/:id',
+    '/{{entities_}}/:id',
     {{validationParams}},
     async (c) => {
       const queryParams = c.req.valid('param');
@@ -22,7 +22,7 @@ export const {{entity}}Router = new Hono()
       return c.json({ message: \`Get {{entity}} with id \${queryParams.id}\` });
     },
   )
-  .put('/{{entities}}/:id',
+  .put('/{{entities_}}/:id',
   {{validationParams}},
   {{validationBody}},
   async (c) => {
@@ -32,7 +32,7 @@ export const {{entity}}Router = new Hono()
     return c.json({ message: \`{{Entity}} with id \${queryParams.id} updated\`, {{entity}} });
   })
   .delete(
-    '/{{entities}}/:id',
+    '/{{entities_}}/:id',
     {{validationParams}},
     async (c) => {
       const queryParams = c.req.valid('param');
@@ -41,7 +41,7 @@ export const {{entity}}Router = new Hono()
     },
   )
   .patch(
-    '/{{entities}}/:id',
+    '/{{entities_}}/:id',
     {{validationParams}},
     {{validationBodyPATCH}},
     async (c) => {

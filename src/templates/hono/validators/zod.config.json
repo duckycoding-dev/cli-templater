@@ -17,8 +17,7 @@
     },
     "validationParams": {
       "description": "The validation middlweware for parameters",
-      "value": "zValidator('param', {{entity}}Schema.pick({ id: true }))",
-      "required": true
+      "value": "zValidator('param', {{entity}}Schema.pick({ id: true }))"
     },
     "schema": {
       "description": "The schema of the entity",

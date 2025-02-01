@@ -1,22 +1,10 @@
 import { z } from 'zod';
 import pluralize from 'pluralize';
 import { importTemplate } from './imports';
-
-const validatorPlaceholderSchema = z.record(
-  z.string(),
-  z.object({
-    description: z.string().optional(),
-    value: z.string().optional().or(z.array(z.string())),
-  }),
-);
-
-export const ValidatorConfigSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  author: z.string(),
-  placeholders: z.array(validatorPlaceholderSchema).default([]),
-  dependencies: z.record(z.string(), z.string()),
-});
+import {
+  ValidatorProcessor,
+  type ValidatorConfig,
+} from '../validator/validatorProcessor';
 
 const templatePlaceholderSchema = z.record(
   z.string(),
@@ -63,7 +51,6 @@ export const ProcessingOptionsSchema = z.object({
   customOptions: z.record(z.unknown()).optional(),
 });
 
-export type ValidatorConfig = z.infer<typeof ValidatorConfigSchema>;
 export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
 export type ProcessingOptions = z.infer<typeof ProcessingOptionsSchema>;
 
@@ -100,6 +87,8 @@ export class TemplateProcessor {
     // Register built-in processing hooks
     this.registerHook('pre-process', this.validateOptions);
     this.registerHook('post-process', this.formatCode);
+    this.registerHook('post-process', this.removeLeftoverPlaceholders);
+    this.registerHook('post-process', this.normalizeCommas);
   }
 
   /** Registers a new template */
@@ -126,7 +115,7 @@ export class TemplateProcessor {
   }
 
   /** Registers a processing hook */
-  private registerHook<T extends HookType>(
+  registerHook<T extends HookType>(
     hookType: T,
     hook: HookMapping[T][number],
   ): void {
@@ -172,7 +161,7 @@ export class TemplateProcessor {
     const parsed = ProcessingOptionsSchema.safeParse(options);
     if (parsed.error) {
       throw new Error(
-        'Options are not valid; ' + parsed.error.errors.join(', '),
+        'Options are not valid: ' + parsed.error.errors.join(', '),
       );
     }
   }
@@ -197,21 +186,34 @@ export class TemplateProcessor {
   /** Injects validator-specific imports and validation code */
   private injectValidatorCode(
     template: string,
-    validator: ValidatorConfig,
+    validatorConfigs: ValidatorConfig,
   ): string {
-    return '';
+    const validator = new ValidatorProcessor(validatorConfigs);
+    return validator.processValidator(template);
   }
 
   /** Formats generated code (removes comments if required) */
-  private async formatCode(
-    text: string,
-    options: ProcessingOptions,
-  ): Promise<string> {
+  private formatCode(text: string, options: ProcessingOptions): string {
     if (options.removeComments) {
       return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // Remove multi-line and inline comments
       // .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
     }
     return text;
+  }
+
+  /** Removes leftover placeholders from the processed code */
+  private removeLeftoverPlaceholders(text: string): string {
+    return text.replace(/\{\{[^}]+\}\}/g, '');
+  }
+
+  /** Replaces leftover multiple commas */
+  private normalizeCommas(text: string) {
+    // First replace multiple comma patterns (with spaces before)
+    let result = text.replace(/(?:\s*,)+/g, ',');
+
+    // Then replace semicolon + spaces + comma with just semicolon
+    result = result.replace(/;\s*,/g, ';');
+    return result;
   }
 
   /** Returns available templates */

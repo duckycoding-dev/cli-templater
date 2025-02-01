@@ -2,37 +2,40 @@
   "name": "Zod Validator",
   "description": "Zod schema validation for Hono",
   "author": "DuckyCoding",
-  "placeholder": [
-    {
-      "imports": {
-        "value": [
-          "import { z } from 'zod';",
-          "import { zValidator } from '@hono/zod-validator';"
-        ],
-        "description": "The imports to include"
-      },
-      "validationBody": {
-        "description": "The validation middlweware for the request body",
-        "value": "tbValidator('json', {{create{{Entity}}Schema}})"
-      },
-      "validationParams": {
-        "description": "The validation middlweware for parameters",
-        "value": "tbValidator('param', {{Entity}}Schema)"
-      },
-      "schema": {
-        "description": "The schema of the entity",
-        "value": [
-          "const {{entity}}Schema = z.object({",
-          "id: z.string().uuid(),",
-          "});"
-        ]
-      },
-      "createSchema": {
-        "description": "The schema for creating a new entity",
-        "value": "const create{{Entity}}Schema = {{entity}}Schema.omit({ id: true });"
-      }
+  "placeholders": {
+    "validatorImports": {
+      "value": [
+        "import { z } from 'zod';",
+        "import { zValidator } from '@hono/zod-validator';"
+      ],
+      "description": "The imports to include"
+    },
+    "validationBody": {
+      "description": "The validation middlweware for the request body",
+      "value": "zValidator('json', create{{Entity}}Schema)"
+    },
+    "validationBodyPATCH": {
+      "description": "The validation middlweware for the request body of a PATCH request",
+      "value": "zValidator('json', create{{Entity}}Schema.partial())"
+    },
+    "validationParams": {
+      "description": "The validation middlweware for parameters",
+      "value": "zValidator('param', {{entity}}Schema.pick({ id: true }))",
+      "required": true
+    },
+    "schema": {
+      "description": "The schema of the entity",
+      "value": [
+        "const {{entity}}Schema = z.object({",
+        "id: z.string().uuid()",
+        "});"
+      ]
+    },
+    "createSchema": {
+      "description": "The schema for creating a new entity",
+      "value": "const create{{Entity}}Schema = {{entity}}Schema.omit({ id: true });"
     }
-  ],
+  },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
     "zod": "^3.24.1"

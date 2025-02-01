@@ -36,12 +36,6 @@
         "description": "The entity name as plural",
         "required": true
       }
-    },
-    {
-      "imports": {
-        "description": "The imports to include",
-        "required": true
-      }
     }
   ]
 }

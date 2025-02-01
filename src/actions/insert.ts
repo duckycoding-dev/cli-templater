@@ -13,29 +13,31 @@ import {
 } from '../utils/imports';
 
 export async function insertBoilerplateAction(
-  options: Partial<ProcessingOptions & { template: string }>,
+  commandLineOptions: Partial<
+    ProcessingOptions & { template: string; debug: boolean; print: boolean }
+  >,
 ) {
   console.log('\n💡 Let’s set up your boilerplate!');
 
   // Step 1: Get entity name
-  if (options.entity) {
-    if (options.entity.trim() === '') {
+  if (commandLineOptions.entity) {
+    if (commandLineOptions.entity.trim() === '') {
       throw new Error('Entity name cannot be empty');
     }
-    if (!/^[a-zA-Z0-9_]+$/.test(options.entity)) {
+    if (!/^[a-zA-Z0-9_]+$/.test(commandLineOptions.entity)) {
       throw new Error(
         'Entity name must only contain letters, numbers, and underscores',
       );
     }
-    if (/^[0-9]/.test(options.entity)) {
+    if (/^[0-9]/.test(commandLineOptions.entity)) {
       throw new Error('Entity name must not start with a number');
     }
   }
   const chosenEntityName =
-    options.entity ||
+    commandLineOptions.entity ||
     (await input({
       message: 'Enter the entity name:',
-      default: options.entity || 'entity',
+      default: commandLineOptions.entity || 'entity',
       validate: (input) => {
         if (input.trim() === '') {
           return 'Entity name cannot be empty';
@@ -74,8 +76,9 @@ export async function insertBoilerplateAction(
   }
 
   const chosenTemplate =
-    options.template && templateChoices.includes(options.template)
-      ? options.template
+    commandLineOptions.template &&
+    templateChoices.includes(commandLineOptions.template)
+      ? commandLineOptions.template
       : (
           await select<string>({
             message: 'Choose the template to use:',
@@ -95,7 +98,7 @@ export async function insertBoilerplateAction(
 
   // Step 4: Keep comments in generated files
   const keepComments =
-    !options.removeComments ||
+    !commandLineOptions.removeComments ||
     (await confirm({
       message: 'Do you want to keep comments in generated files?',
       default: false,
@@ -103,9 +106,9 @@ export async function insertBoilerplateAction(
 
   // Step 5: Validation type
   const chosenValidationType =
-    options.validatorType &&
-    templateConfigs.validatorSupport.includes(options.validatorType)
-      ? options.validatorType
+    commandLineOptions.validatorType &&
+    templateConfigs.validatorSupport.includes(commandLineOptions.validatorType)
+      ? commandLineOptions.validatorType
       : (
           await select<string>({
             message: 'Choose what type of validation to use:',
@@ -183,8 +186,6 @@ export async function insertBoilerplateAction(
     throw new Error(`Error processing template:\n${(err as Error).message}`);
   }
 
-  console.log(mainFileContent);
-
   // Create the base directory and example files (if desired)
 
   if (!fs.existsSync(chosenBaseDir)) {
@@ -218,5 +219,17 @@ export async function insertBoilerplateAction(
     // const typesFile = path.join(entityDir, `${entityName}.types.ts`);
     // fs.writeFileSync(typesFile, typesFileContent);
     // console.log(`📝 Created types file: ${typesFile}`);
+  }
+
+  if (commandLineOptions.print) {
+    console.log('=================================================');
+    console.log('================MAIN FILE CONTENT================');
+    console.log('=================================================');
+    console.log(mainFileContent);
+
+    console.log('=================================================');
+    console.log('===============TYPES FILE CONTENT================');
+    console.log('=================================================');
+    console.log(ansis.greenBright(typesFileContent));
   }
 }

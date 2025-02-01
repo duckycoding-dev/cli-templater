@@ -12,6 +12,7 @@ export const insertCommand = (program: Command) => {
     .option('-v, --validator <VALIDATOR NAME>', 'Set default validator to use')
     .option('--kc, --keepComments', 'Keep comments in generated files')
     .option('-d, --debug', 'output extra debugging')
+    .option('-p, --print', 'also prints the output to console')
     .action(async function () {
       const opts = this.opts();
 
@@ -20,10 +21,12 @@ export const insertCommand = (program: Command) => {
         template: opts.template?.toLowerCase(),
         removeComments: !opts.keepComments,
         validatorType: opts.validator?.toLowerCase(),
+        debug: opts.debug,
+        print: opts.print,
       };
 
       try {
-        await insertBoilerplateAction({ ...formattedOptions });
+        await insertBoilerplateAction(formattedOptions);
       } catch (err) {
         console.error(`❌ ${(err as Error).message}`);
         process.exit(1);

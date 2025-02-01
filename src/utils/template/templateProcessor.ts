@@ -154,9 +154,11 @@ export class TemplateProcessor {
   private templates: Map<string, TemplateConfig>;
   private validators: Map<string, ValidatorConfig>;
   private hooks: HookMapping;
-  private typesFileContent?: string;
-  private mainFileContent?: string;
+  private validatorProcessor?: ValidatorProcessor;
   private rawTemplate?: string;
+  private mainFileContent?: string;
+  private rawTypesTemplate?: string;
+  private typesFileContent?: string;
 
   constructor() {
     this.templates = new Map();
@@ -172,6 +174,7 @@ export class TemplateProcessor {
     this.registerHook('post-process', this.removeLeftoverPlaceholders);
     this.registerHook('post-process', this.normalizeCommas);
     this.registerHook('post-process', this.removeMultipleEmptyLines);
+    this.registerHook('post-process', this.removeFirstNewline);
   }
 
   /** Registers a new template */
@@ -294,30 +297,28 @@ export class TemplateProcessor {
       .replace(/\{\{entities-\}\}/g, formattedEntityKebabCasePlural);
   }
 
-  /** Injects validator-specific imports and validation code */
-  private injectValidatorCode(
-    template: string,
-    validatorConfigs: ValidatorConfig,
-  ): string {
-    const validator = new ValidatorProcessor(validatorConfigs);
-    return validator.processValidator(template);
-  }
-
   /** Injects types */
-  private async injectTypes(templateName: string, options: ProcessingOptions) {
-    let typesCode = '';
+  private async injectTypes(templateName: string, separateTypes: boolean) {
+    let importedTypesTemplateContent = '';
     const typesTemplate = await importTypesTemplate(templateName);
-    if (options.validatorType && options.validatorType !== 'none') {
-      typesCode = typesTemplate.defaultOutput ?? typesTemplate.fallback ?? '';
+    if (this.validatorProcessor) {
+      importedTypesTemplateContent = this.removeFirstNewline(
+        typesTemplate.defaultOutput ?? typesTemplate.fallback ?? '',
+      );
     } else {
-      typesCode = typesTemplate.fallback ?? '';
+      importedTypesTemplateContent = this.removeFirstNewline(
+        typesTemplate.fallback ?? '',
+      );
     }
-    if (options.separateTypes) {
+    if (separateTypes) {
       // add types to separate new file
-      this.typesFileContent = typesCode;
+      this.rawTypesTemplate = importedTypesTemplateContent;
     } else {
       // add types to main output file
-      this.rawTemplate = this.rawTemplate?.replace(/\{\{types\}\}/g, typesCode);
+      this.rawTemplate = this.rawTemplate?.replace(
+        /\{\{types\}\}/g,
+        importedTypesTemplateContent,
+      );
     }
   }
 
@@ -350,8 +351,13 @@ export class TemplateProcessor {
   /** Remove multiple empty lines */
   private removeMultipleEmptyLines(text: string) {
     // reduce multiple empty lines to single empty line
-    // this regex matches 3 or more newlines and replaces them with 2 newlines
-    return text.replace(/{\n}{3,}/g, '\n\n');
+    // this regex matches multiple empty lines and replaces them with a single empty line
+    return text.replace(/^\s*$(?:\r\n?|\n)/gm, '\n');
+  }
+
+  /** Remove first character if it is a newline character*/
+  private removeFirstNewline(text: string) {
+    return text.replace(/^\n/, '');
   }
 
   /** Returns available templates */
@@ -382,6 +388,16 @@ export class TemplateProcessor {
     };
   }
 
+  /** Returns generated main file content */
+  getMainFileContent(): string | undefined {
+    return this.mainFileContent;
+  }
+
+  /** Returns generated types file content */
+  getTypesFileContent(): string | undefined {
+    return this.typesFileContent;
+  }
+
   /** Processes a template with the given options */
   async processTemplate(
     templateName: string,
@@ -390,34 +406,46 @@ export class TemplateProcessor {
     // 1. Run pre-processing hooks
     await this.runHooks('pre-process', options);
 
-    // 2. Fetch template and validator
+    // 2. Get template and validator from private fields
     const templateConfigs = this.templates.get(templateName);
     if (!templateConfigs) {
       throw new Error(`Template "${templateName}" not found`);
     }
 
     this.rawTemplate = await this.loadTemplate(templateConfigs.filename);
-    const validator =
-      options.validatorType && options.validatorType !== 'none'
-        ? this.validators.get(options.validatorType)
-        : undefined;
 
-    // 3. Inject validator-specific code
-    if (validator) {
-      this.rawTemplate = this.injectValidatorCode(this.rawTemplate, validator);
+    const selectedValidatorConfigs = this.validators.get(options.validatorType);
+    if (options.validatorType !== 'none' && selectedValidatorConfigs) {
+      this.validatorProcessor = new ValidatorProcessor(
+        selectedValidatorConfigs,
+      );
     }
 
-    // 4. Inject types
-    await this.injectTypes(templateName, options);
+    // 3. Inject types
+    await this.injectTypes(templateName, options.separateTypes);
+
+    // 4. Inject validator-specific code
+    if (this.validatorProcessor) {
+      this.rawTemplate = this.validatorProcessor?.processValidator(
+        this.rawTemplate,
+      );
+      if (this.rawTypesTemplate) {
+        this.rawTypesTemplate = this.validatorProcessor?.processValidator(
+          this.rawTypesTemplate,
+        );
+      }
+      this.validatorProcessor.alertOrThrowForMissingPlaceholders();
+    }
 
     // 5. Perform entity replacements
     this.rawTemplate = this.replaceDefaultEntityNamePlaceholders(
       this.rawTemplate,
       options.entity,
     );
-    if (this.typesFileContent) {
-      this.typesFileContent = this.replaceDefaultEntityNamePlaceholders(
-        this.typesFileContent,
+
+    if (this.rawTypesTemplate) {
+      this.rawTypesTemplate = this.replaceDefaultEntityNamePlaceholders(
+        this.rawTypesTemplate,
         options.entity,
       );
     }
@@ -428,7 +456,13 @@ export class TemplateProcessor {
       this.rawTemplate,
       options,
     );
-
+    if (this.rawTypesTemplate) {
+      this.typesFileContent = await this.runHooks(
+        'post-process',
+        this.rawTypesTemplate,
+        options,
+      );
+    }
     return {
       mainFileContent: this.mainFileContent,
       typesFileContent: this.typesFileContent,

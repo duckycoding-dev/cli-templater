@@ -2,11 +2,46 @@
   "name": "Hono REST API",
   "description": "A REST API template using Hono framework with validation support",
   "version": "1.0.0",
-  "author": "Your Name",
+  "author": "DuckyCoding",
   "tags": ["api", "rest", "hono", "typescript"],
-  "validatorSupport": ["none", "zod", "yup"],
+  "validatorSupport": ["none", "zod", "typebox"],
   "filename": "hono",
-  "examples": {
-    "basic": "examples/user.ts"
-  }
+  "files": [
+    {
+      "defaultPath": "src",
+      "outputName": "{{entity}}.ts",
+      "templatePath": "hono.ts"
+    },
+    {
+      "defaultPath": "src/types",
+      "outputName": "{{entity}}.ts",
+      "templatePath": "hono.types.ts"
+    }
+  ],
+  "placeholders": [
+    {
+      "entity": {
+        "description": "The entity name",
+        "required": true
+      }
+    },
+    {
+      "Entity": {
+        "description": "The entity name PascalCase",
+        "required": true
+      }
+    },
+    {
+      "entities": {
+        "description": "The entity name as plural",
+        "required": true
+      }
+    },
+    {
+      "imports": {
+        "description": "The imports to include",
+        "required": true
+      }
+    }
+  ]
 }

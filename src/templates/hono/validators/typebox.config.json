@@ -1,13 +1,13 @@
 {
-  "name": "Zod Validator",
-  "description": "Zod schema validation for Hono",
+  "name": "TypeBox Validator",
+  "description": "TypeBox schema validation for Hono",
   "author": "DuckyCoding",
   "placeholder": [
     {
       "imports": {
         "value": [
-          "import { z } from 'zod';",
-          "import { zValidator } from '@hono/zod-validator';"
+          "import { tbValidator } from '@hono/typebox-validator'",
+          "import { Type as T } from '@sinclair/typebox'"
         ],
         "description": "The imports to include"
       },
@@ -22,20 +22,20 @@
       "schema": {
         "description": "The schema of the entity",
         "value": [
-          "const {{entity}}Schema = z.object({",
-          "id: z.string().uuid(),",
+          "const {{entity}}Schema = T.object({",
+          "id: T.String()",
           "});"
         ]
       },
       "createSchema": {
         "description": "The schema for creating a new entity",
-        "value": "const create{{Entity}}Schema = {{entity}}Schema.omit({ id: true });"
+        "value": "const create{{Entity}}Schema = T.Omit({{entity}}Schema, ['id']);"
       }
     }
   ],
   "dependencies": {
-    "@hono/zod-validator": "^0.4.2",
-    "zod": "^3.24.1"
+    "@hono/typebox-validator": "^0.3.1",
+    "@sinclair/typebox": "^0.24.31"
   },
   "devDepencencies": {}
 }

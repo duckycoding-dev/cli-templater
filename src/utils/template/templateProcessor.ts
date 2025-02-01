@@ -2,24 +2,54 @@ import { z } from 'zod';
 import pluralize from 'pluralize';
 import { importTemplate } from './imports';
 
+const validatorPlaceholderSchema = z.record(
+  z.string(),
+  z.object({
+    description: z.string().optional(),
+    value: z.string().optional().or(z.array(z.string())),
+  }),
+);
+
 export const ValidatorConfigSchema = z.object({
   name: z.string(),
   description: z.string(),
   author: z.string(),
-  imports: z.array(z.string()),
-  validationCode: z.string(),
+  placeholders: z.array(validatorPlaceholderSchema).default([]),
   dependencies: z.record(z.string(), z.string()),
 });
 
-export const TemplateConfigSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  version: z.string(),
-  author: z.string(),
-  tags: z.array(z.string()),
-  validatorSupport: z.array(z.string()),
-  filename: z.string(),
-});
+const templatePlaceholderSchema = z.record(
+  z.string(),
+  z.object({
+    description: z.string().optional(),
+    required: z.boolean().default(false),
+  }),
+);
+
+export const TemplateConfigSchema = z
+  .object({
+    filename: z.string().min(1, 'Filename is required'),
+    name: z.string().optional(),
+    author: z.string().optional(),
+    description: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    version: z.string(),
+    placeholders: z.array(templatePlaceholderSchema).default([]),
+    files: z
+      .array(
+        z.object({
+          defaultPath: z.string().min(1).optional(),
+          outputName: z.string().min(1).optional(),
+          templatePath: z.string().min(1),
+        }),
+      )
+      .min(1),
+    validatorSupport: z.array(z.string()).default(['none']),
+  })
+  .transform((data) => ({
+    ...data,
+    name: data.name ?? data.filename, // Set `name` to `filename` if not provided
+  }));
 
 export const ProcessingOptionsSchema = z.object({
   entity: z
@@ -169,12 +199,7 @@ export class TemplateProcessor {
     template: string,
     validator: ValidatorConfig,
   ): string {
-    return template
-      .replace(`import { z } from 'zod';`, validator.imports?.join('\n') || '')
-      .replace(
-        `zValidator('json', create{{Entity}}Schema)`,
-        validator.validationCode || '',
-      );
+    return '';
   }
 
   /** Formats generated code (removes comments if required) */
@@ -212,6 +237,8 @@ export class TemplateProcessor {
       tags: template.tags,
       validatorSupport: template.validatorSupport,
       filename: template.filename,
+      files: template.files,
+      placeholders: template.placeholders,
     };
   }
 

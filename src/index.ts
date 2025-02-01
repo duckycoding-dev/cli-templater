@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json'; // could check if this is of any security concern
-import { insertBoilerplate } from './actions/insert';
 import { welcome } from './actions/welcome';
+import { insertCommand } from './commands/insert';
+import { addTemplateCommand } from './commands/add_template';
 
 const program = new Command();
-
-// This is used as an example in the README for the Quick Start.
 
 if (process.argv.length === 2) {
   welcome(version);
@@ -18,6 +17,11 @@ program
     'Interactive CLI tool that aids in setting up repetitive files with a common structure',
   )
   .version(version);
+
+insertCommand(program);
+addTemplateCommand(program);
+
+program.parse(process.argv);
 
 /* 
   action callback takes as arguments the following arguments;
@@ -34,33 +38,3 @@ program
 
 // .argument('[string]', 'optional argument', 'default value')
 // .argument('<string>', 'non optional argument')
-
-program
-  .command('insert')
-  .description('Insert boilerplate code by choosing from an existing template')
-  .option('-e, --entity <ENTITY NAME>', 'Set default entity name to use')
-  .option('-t, --template <TEMPLATE NAME>', 'Set default template to use')
-  .option('-v, --validator <VALIDATOR NAME>', 'Set default validator to use')
-  .option('--kc, --keepComments', 'Keep comments in generated files')
-  .option('-d, --debug', 'output extra debugging')
-  .action(async function () {
-    const opts = this.opts();
-
-    const formattedOptions = {
-      entity: opts.entity,
-      template: opts.template?.toLowerCase(),
-      removeComments: !opts.keepComments,
-      validatorType: opts.validator?.toLowerCase(),
-    };
-
-    try {
-      await insertBoilerplate({ ...formattedOptions });
-    } catch (err) {
-      console.error(`❌ ${(err as Error).message}`);
-      process.exit(1);
-    }
-  });
-
-program.parse(process.argv);
-
-// Execute by calling `node src/index.ts OPTIONS,`

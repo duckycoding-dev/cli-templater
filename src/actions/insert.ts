@@ -12,7 +12,7 @@ import {
   importValidatorConfigs,
 } from '../utils/template/imports';
 
-export async function insertBoilerplate(
+export async function insertBoilerplateAction(
   options: Partial<ProcessingOptions & { template: string }>,
 ) {
   console.log('\n💡 Let’s set up your boilerplate!');

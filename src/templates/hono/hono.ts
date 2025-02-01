@@ -1,27 +1,7 @@
 export default `
 import { Hono } from 'hono';
 {{validatorImports}}
-
-{{schema}}
-{{createSchema}}
-
-{{ciaoatutti}}
-
-{{ciaoa a asd astutti}}
-,
-
-,,
-
-, , ,
-
-,
-
-,
-
-,
-
-export type {{Entity}} = z.infer<typeof {{entity}}Schema>;
-export type Create{{Entity}} = z.infer<typeof create{{Entity}}Schema>;
+{{types}}
 
 export const {{entity}}Router = new Hono()
   .get('/{{entities}}', async (c) => {

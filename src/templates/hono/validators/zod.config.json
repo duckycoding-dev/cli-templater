@@ -4,10 +4,7 @@
   "author": "DuckyCoding",
   "placeholders": {
     "validatorImports": {
-      "value": [
-        "import { z } from 'zod';",
-        "import { zValidator } from '@hono/zod-validator';"
-      ],
+      "value": ["import { zValidator } from '@hono/zod-validator';"],
       "description": "The imports to include"
     },
     "validationBody": {
@@ -34,6 +31,18 @@
     "createSchema": {
       "description": "The schema for creating a new entity",
       "value": "const create{{Entity}}Schema = {{entity}}Schema.omit({ id: true });"
+    },
+    "type": {
+      "description": "The type of the entity",
+      "value": "export type {{Entity}} = z.infer<typeof {{entity}}Schema>;"
+    },
+    "createType": {
+      "description": "The type of the entity used for creation operations",
+      "value": "export type Create{{Entity}} = z.infer<typeof create{{Entity}}Schema>;"
+    },
+    "typesImports": {
+      "description": "The imports to include for the types file",
+      "value": "import { z } from 'zod';"
     }
   },
   "dependencies": {

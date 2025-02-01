@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import pluralize from 'pluralize';
-import { importTemplate } from './imports';
+import { importTemplate } from '../imports';
 import {
   ValidatorProcessor,
   type ValidatorConfig,
@@ -86,9 +86,10 @@ export class TemplateProcessor {
 
     // Register built-in processing hooks
     this.registerHook('pre-process', this.validateOptions);
-    this.registerHook('post-process', this.formatCode);
+    this.registerHook('post-process', this.removeCommentsIfNeeded);
     this.registerHook('post-process', this.removeLeftoverPlaceholders);
     this.registerHook('post-process', this.normalizeCommas);
+    this.registerHook('post-process', this.removeMultipleEmptyLines);
   }
 
   /** Registers a new template */
@@ -192,8 +193,11 @@ export class TemplateProcessor {
     return validator.processValidator(template);
   }
 
-  /** Formats generated code (removes comments if required) */
-  private formatCode(text: string, options: ProcessingOptions): string {
+  /** Removes comments */
+  private removeCommentsIfNeeded(
+    text: string,
+    options: ProcessingOptions,
+  ): string {
     if (options.removeComments) {
       return text.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // Remove multi-line and inline comments
       // .replace(/^\s*[\r\n]/gm, ''); // Remove empty lines
@@ -214,6 +218,13 @@ export class TemplateProcessor {
     // Then replace semicolon + spaces + comma with just semicolon
     result = result.replace(/;\s*,/g, ';');
     return result;
+  }
+
+  /** Remove multiple empty lines */
+  private removeMultipleEmptyLines(text: string) {
+    // reduce multiple empty lines to single empty line
+    // this regex matches 3 or more newlines and replaces them with 2 newlines
+    return text.replace(/{\n}{3,}/g, '\n\n');
   }
 
   /** Returns available templates */

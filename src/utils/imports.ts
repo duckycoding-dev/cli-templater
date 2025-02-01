@@ -1,9 +1,12 @@
-import { TemplateConfigSchema, type TemplateConfig } from './templateProcessor';
+import {
+  TemplateConfigSchema,
+  type TemplateConfig,
+} from './template/templateProcessor';
 
 import {
   ValidatorConfigSchema,
   type ValidatorConfig,
-} from '../validator/validatorProcessor';
+} from './validator/validatorProcessor';
 
 export async function importTemplate(templateName: string): Promise<string> {
   const { default: template } = await import(

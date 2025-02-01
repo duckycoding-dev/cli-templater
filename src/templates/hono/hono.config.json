@@ -36,6 +36,12 @@
         "description": "The entity name as plural",
         "required": true
       }
+    },
+    {
+      "types": {
+        "description": "Defines where types will be placed if they are not defined in a separate file",
+        "required": true
+      }
     }
   ]
 }

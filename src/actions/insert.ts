@@ -10,7 +10,7 @@ import {
 import {
   importTemplateConfigs,
   importValidatorConfigs,
-} from '../utils/template/imports';
+} from '../utils/imports';
 
 export async function insertBoilerplateAction(
   options: Partial<ProcessingOptions & { template: string }>,
@@ -53,7 +53,7 @@ export async function insertBoilerplateAction(
   // Step 2: Get base directory
   const chosenBaseDir = await input({
     message: 'Enter the base directory:',
-    default: './src/',
+    default: './src',
     validate: (input) => {
       if (input.trim() === '') {
         return 'Base directory cannot be empty';
@@ -123,8 +123,8 @@ export async function insertBoilerplateAction(
   let typesDir: string | undefined;
   if (separateTypes) {
     typesDir = await input({
-      message: 'Enter the base directory:',
-      default: './src/types/',
+      message: 'Enter the base directory for your types:',
+      default: './src/types',
       validate: (input) => {
         if (input.trim() === '') {
           return 'Base directory cannot be empty';

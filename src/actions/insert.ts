@@ -11,6 +11,8 @@ import {
   importTemplateConfigs,
   importValidatorConfigs,
 } from '../utils/imports';
+import { formatEntityName, validateEntityNameInput } from '@/utils/entity';
+import { writeFileWithIncrementalName } from '@/utils/filesystem';
 
 export async function insertBoilerplateAction(
   commandLineOptions: Partial<
@@ -21,36 +23,17 @@ export async function insertBoilerplateAction(
 
   // Step 1: Get entity name
   if (commandLineOptions.entity) {
-    if (commandLineOptions.entity.trim() === '') {
-      throw new Error('Entity name cannot be empty');
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(commandLineOptions.entity)) {
-      throw new Error(
-        'Entity name must only contain letters, numbers, and underscores',
-      );
-    }
-    if (/^[0-9]/.test(commandLineOptions.entity)) {
-      throw new Error('Entity name must not start with a number');
-    }
+    validateEntityNameInput(commandLineOptions.entity, true);
   }
-  const chosenEntityName =
+  let chosenEntityName =
     commandLineOptions.entity ||
     (await input({
       message: 'Enter the entity name:',
       default: commandLineOptions.entity || 'entity',
-      validate: (input) => {
-        if (input.trim() === '') {
-          return 'Entity name cannot be empty';
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(input)) {
-          return 'Entity name must only contain letters, numbers, and underscores';
-        }
-        if (/^[0-9]/.test(input)) {
-          return 'Entity name must not start with a number';
-        }
-        return true;
-      },
+      validate: (input) => validateEntityNameInput(input),
     }));
+
+  chosenEntityName = formatEntityName(chosenEntityName, false);
 
   // Step 2: Get base directory
   const chosenBaseDir = await input({
@@ -96,15 +79,7 @@ export async function insertBoilerplateAction(
     );
   }
 
-  // Step 4: Keep comments in generated files
-  const keepComments =
-    !commandLineOptions.removeComments ||
-    (await confirm({
-      message: 'Do you want to keep comments in generated files?',
-      default: false,
-    }));
-
-  // Step 5: Validation type
+  // Step 4: Validation type
   const chosenValidationType =
     commandLineOptions.validatorType &&
     templateConfigs.validatorSupport.includes(commandLineOptions.validatorType)
@@ -117,15 +92,15 @@ export async function insertBoilerplateAction(
           })
         ).toLowerCase();
 
-  // Step 6: Generate types in separate file
+  // Step 5: Generate types in separate file
   const separateTypes = await confirm({
     message: 'Do you want generate types to a separate file?',
     default: true,
   });
 
-  let typesDir: string | undefined;
+  let chosenTypesDir: string | undefined;
   if (separateTypes) {
-    typesDir = await input({
+    chosenTypesDir = await input({
       message: 'Enter the base directory for your types:',
       default: './src/types',
       validate: (input) => {
@@ -137,20 +112,28 @@ export async function insertBoilerplateAction(
     });
   }
 
+  // Step 6: Keep comments in generated files
+  const keepComments =
+    !commandLineOptions.removeComments ||
+    (await confirm({
+      message: 'Do you want to keep comments in generated files?',
+      default: false,
+    }));
+
   // Output the collected data (or implement the boilerplate generation logic)
   console.log('\n✅ Your selections:');
   console.log(`- Entity name: ${ansis.cyanBright(chosenEntityName)}`);
   console.log(`- Base directory: ${ansis.magentaBright(chosenBaseDir)}`);
   console.log(`- Template: ${ansis.cyanBright(chosenTemplate)}`);
-  console.log(
-    `- Keep comments: ${ansis.magentaBright(keepComments ? 'Yes' : 'No')}`,
-  );
   console.log(`- Validation type: ${ansis.cyanBright(chosenValidationType)}`);
-  if (separateTypes && typesDir) {
-    console.log(`- Types directory: ${ansis.magentaBright(typesDir)}`);
+  if (separateTypes && chosenTypesDir) {
+    console.log(`- Types directory: ${ansis.magentaBright(chosenTypesDir)}`);
   } else {
     console.log('- Types saved in entity file');
   }
+  console.log(
+    `- Keep comments: ${ansis.magentaBright(keepComments ? 'Yes' : 'No')}`,
+  );
 
   const processor = new TemplateProcessor();
 
@@ -200,25 +183,67 @@ export async function insertBoilerplateAction(
 
   const entityDir = path.join(chosenBaseDir, chosenEntityName);
   if (!fs.existsSync(entityDir)) {
-    // fs.mkdirSync(entityDir, { recursive: true });
+    fs.mkdirSync(entityDir, { recursive: true });
     console.log(`\n📂 Created directory: ${entityDir}`);
   } else {
-    console.log(`\n⚠️ Template already exists: ${entityDir}`);
+    console.log(`\n📂⚠️ Directory ${entityDir} already exists`);
+  }
+  //   console.log(`\n⚠️ Entity already exists at ${entityDir}`);
+  //   const shouldOverwrite = await confirm({
+  //     message: 'Do you want to overwrite the existing entity?',
+  //     default: false,
+  //   });
+  //   if (!shouldOverwrite) process.exit(1);
+  //   fs.mkdirSync(entityDir, { recursive: true });
+  // }
+  const mainFilePath = path.join(entityDir, `${chosenEntityName}.ts`);
+  if (!fs.existsSync(mainFilePath)) {
+    fs.writeFileSync(mainFilePath, mainFileContent);
+  } else {
+    console.log(`\n⚠️ Entity main file already exists at ${mainFilePath}`);
     const shouldOverwrite = await confirm({
-      message: 'Do you want to overwrite the existing template?',
+      message: 'Do you want to overwrite the existing entity file?',
       default: false,
     });
-    if (!shouldOverwrite) process.exit(1);
-    // fs.mkdirSync(entityDir, { recursive: true });
+    if (shouldOverwrite) {
+      fs.writeFileSync(mainFilePath, mainFileContent);
+      console.log(`📝 Created main file: ${mainFilePath}`);
+    } else {
+      const incrementalNameMainFilePath = writeFileWithIncrementalName(
+        mainFilePath,
+        mainFileContent,
+        true,
+      );
+      console.log(`📝 Created main file: ${incrementalNameMainFilePath}`);
+    }
   }
 
-  // const mainFile = path.join(entityDir, `${entityName}.ts`);
-  // fs.writeFileSync(mainFile, mainFileContent);
-  // console.log(`📝 Created main file: ${mainFile}`);
-  if (separateTypes) {
-    // const typesFile = path.join(entityDir, `${entityName}.types.ts`);
-    // fs.writeFileSync(typesFile, typesFileContent);
-    // console.log(`📝 Created types file: ${typesFile}`);
+  if (separateTypes && chosenTypesDir) {
+    const typesDir = path.join(chosenTypesDir, chosenEntityName);
+    const typesFilePath = path.join(
+      typesDir,
+      `${chosenEntityName}${typesDir === entityDir ? '.types' : ''}.ts`,
+    );
+    if (!fs.existsSync(typesFilePath)) {
+      fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file
+    } else {
+      console.log(`\n⚠️ Entity types] file already exists at ${typesFilePath}`);
+      const shouldOverwrite = await confirm({
+        message: 'Do you want to overwrite the existing entity file?',
+        default: false,
+      });
+      if (shouldOverwrite) {
+        fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file
+        console.log(`📝 Created types file: ${typesFilePath}`);
+      } else {
+        const incrementalNameTypesFilePath = writeFileWithIncrementalName(
+          typesFilePath,
+          typesFileContent ?? '', //the types template might exist and still be empty, we treat this as if the user wanted an empty file
+          true,
+        );
+        console.log(`📝 Created types file: ${incrementalNameTypesFilePath}`);
+      }
+    }
   }
 
   if (commandLineOptions.print) {

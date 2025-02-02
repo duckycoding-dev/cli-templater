@@ -10,9 +10,12 @@ export const insertCommand = (program: Command) => {
     .option('-e, --entity <ENTITY NAME>', 'Set default entity name to use')
     .option('-t, --template <TEMPLATE NAME>', 'Set default template to use')
     .option('-v, --validator <VALIDATOR NAME>', 'Set default validator to use')
-    .option('--kc, --keepComments', 'Keep comments in generated files')
-    .option('-d, --debug', 'output extra debugging')
-    .option('-p, --print', 'also prints the output to console')
+    .option('--kc, --keep_comments', 'Keep comments in generated files')
+    .option('-d, --debug', 'Output extra debugging')
+    .option(
+      '-p, --print',
+      'Prints the generated content to the console as well',
+    )
     .action(async function () {
       const opts = this.opts();
 

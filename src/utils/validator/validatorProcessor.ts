@@ -78,7 +78,7 @@ export class ValidatorProcessor {
   }
 
   /** Processes the given validator configs */
-  processValidator(rawTemplate: string) {
+  processValidator(rawTemplate: string, instance?: string) {
     this.checkPlaceholdersExistInTemplate(rawTemplate);
 
     // Process the validator configs
@@ -89,7 +89,7 @@ export class ValidatorProcessor {
     let processedTemplate = rawTemplate.replace(/^\n/, '');
     if (this.validatorConfigs.placeholders) {
       console.log(
-        `Replacing ${this.validatorConfigs.name} validator placeholders...`,
+        `Replacing ${this.validatorConfigs.name} validator placeholders${instance ? ` in ${instance} file` : ''}...`,
       );
     }
     for (const [placeholderName, placeholderData] of Object.entries(

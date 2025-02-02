@@ -5,7 +5,8 @@ import {
   ValidatorProcessor,
   type ValidatorConfig,
 } from '../validator/validatorProcessor';
-
+import { validateEntityNameInput } from '../entity';
+import ansis from 'ansis';
 /*
  * These placeholders will always be handled by the template processor in a special way
  * and are available in all templates
@@ -116,15 +117,26 @@ export const TemplateConfigSchema = z
   }));
 
 export const ProcessingOptionsSchema = z.object({
-  entity: z
-    .string()
-    .regex(
-      /^[a-zA-Z0-9_]+$/,
-      'Invalid entity name. Must start with a letter and contain only letters, numbers and underscores',
-    ),
-  removeComments: z.boolean(),
-  validatorType: z.string(),
-  separateTypes: z.boolean(),
+  entity: z.string().refine(
+    (entityName) => validateEntityNameInput(entityName) === true,
+    (entityName: string) => {
+      const errorMessage = validateEntityNameInput(entityName);
+      return {
+        message:
+          typeof errorMessage === 'string'
+            ? errorMessage
+            : 'Invalid entity name',
+      };
+    },
+  ),
+  removeComments: z.boolean({
+    message: 'You must defined whether you want to remove comments or not',
+  }),
+  validatorType: z.string().default('none'),
+  separateTypes: z.boolean({
+    message:
+      'You must specifiy if you want to store the types in a separate file',
+  }),
 });
 
 export type TemplateConfig = z.infer<typeof TemplateConfigSchema>;
@@ -243,11 +255,19 @@ export class TemplateProcessor {
   }
 
   /** Ensures valid options before processing */
-  private async validateOptions(options: ProcessingOptions) {
-    const parsed = ProcessingOptionsSchema.safeParse(options);
+  private async validateOptions(processingOptions: ProcessingOptions) {
+    const parsed = ProcessingOptionsSchema.safeParse(processingOptions);
     if (parsed.error) {
       throw new Error(
-        'Options are not valid: ' + parsed.error.errors.join(', '),
+        `Options are not valid:\n${parsed.error.errors
+          .map((e, index) => {
+            console.log(e.path);
+            const errorMessage = `${index + 1}- ${e.message}`;
+            return index % 2 === 0
+              ? ansis.blueBright(errorMessage)
+              : errorMessage;
+          })
+          .join('\n')}`,
       );
     }
   }
@@ -428,10 +448,12 @@ export class TemplateProcessor {
     if (this.validatorProcessor) {
       this.rawTemplate = this.validatorProcessor?.processValidator(
         this.rawTemplate,
+        'main',
       );
       if (this.rawTypesTemplate) {
         this.rawTypesTemplate = this.validatorProcessor?.processValidator(
           this.rawTypesTemplate,
+          'types',
         );
       }
       this.validatorProcessor.alertOrThrowForMissingPlaceholders();

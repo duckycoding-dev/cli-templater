@@ -33,5 +33,3 @@ export const writeFileWithIncrementalName = (
     }
   }
 };
-
-fs.writeFileSync('ciao.txt', 'ciao');

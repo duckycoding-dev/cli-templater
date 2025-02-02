@@ -1,10 +1,3 @@
-import { TemplateConfig } from '../../utils/template/templateProcessor';
-
-/**
- * @property validatorSupport - This array will always contain a value "none" by default
- * @type TemplateConfig
- * @internal
- */
 const templateConfig = {
   name: 'HUMAN_READABLE_NAME_MORE_INFORMATIVE_THAN_THE_FILENAME',
   description: '',

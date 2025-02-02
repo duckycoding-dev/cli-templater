@@ -9,7 +9,7 @@ export const {{entity}}Router = new Hono()
     return c.json({ message: 'Get all {{entities}}' });
   })
   .post('/{{entities_}}', {{validationBody}}, async (c) => {
-    const {{entity}} = c.req.valid('json');
+    const {{entity}} {{parseEntityBody}}
     // Logic to create a new {{entity}}
     return c.json({ message: '{{Entity}} created', {{entity}} });
   })
@@ -17,27 +17,27 @@ export const {{entity}}Router = new Hono()
     '/{{entities_}}/:id',
     {{validationParams}},
     async (c) => {
-      const queryParams = c.req.valid('param');
+      const {{parsePathParamsResult}}{{parsePathParams}}
       // Logic to get a {{entity}} by id
-      return c.json({ message: \`Get {{entity}} with id \${queryParams.id}\` });
+      return c.json({ message: \`Get {{entity}} with id \${{{parsePathParamsResult}}.id}\` });
     },
   )
   .put('/{{entities_}}/:id',
   {{validationParams}},
   {{validationBody}},
   async (c) => {
-    const {{entity}} = c.req.valid('json');
-    const queryParams = c.req.valid('param');
+    const {{entity}} {{parseEntityBody}}
+    const {{parsePathParamsResult}}{{parsePathParams}}
     // Logic to update a {{entity}} by id
-    return c.json({ message: \`{{Entity}} with id \${queryParams.id} updated\`, {{entity}} });
+    return c.json({ message: \`{{Entity}} with id \${{{parsePathParamsResult}}.id} updated\`, {{entity}} });
   })
   .delete(
     '/{{entities_}}/:id',
     {{validationParams}},
     async (c) => {
-      const queryParams = c.req.valid('param');
+      const {{parsePathParamsResult}}{{parsePathParams}}
       // Logic to delete a {{entity}} by id
-      return c.json({ message: \`{{Entity}} with id \${queryParams.id} deleted\` });
+      return c.json({ message: \`{{Entity}} with id \${{{parsePathParamsResult}}.id} deleted\` });
     },
   )
   .patch(
@@ -45,11 +45,11 @@ export const {{entity}}Router = new Hono()
     {{validationParams}},
     {{validationBodyPATCH}},
     async (c) => {
-      const queryParams = c.req.valid('param');
-      const {{entity}} = c.req.valid('json');
+      const {{parsePathParamsResult}}{{parsePathParams}}
+      const {{entity}} {{parseEntityBody}}
       // Logic to partially update a {{entity}} by id
       return c.json({
-        message: \`{{Entity}} with id \${queryParams.id} partially updated\`,
+        message: \`{{Entity}} with id \${{{parsePathParamsResult}}.id} partially updated\`,
         {{entity}},
       });
     },

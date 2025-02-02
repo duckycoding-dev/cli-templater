@@ -1,12 +1,12 @@
 import {
   TemplateConfigSchema,
   type TemplateConfig,
-} from './template/templateProcessor';
-
+} from '../processors/TemplateProcessor';
+import ansis from 'ansis';
 import {
   ValidatorConfigSchema,
   type ValidatorConfig,
-} from './validator/validatorProcessor';
+} from '../processors/ValidatorProcessor';
 
 export async function importTemplate(templateName: string): Promise<string> {
   const { default: template } = await import(
@@ -35,14 +35,24 @@ export async function importTemplateConfigs(
 
 export async function importValidatorConfigs(
   templateName: string,
-  validatorName: string,
+  validatorName: 'default' | (string & {}),
 ): Promise<ValidatorConfig> {
   const { default: validatorConfigsFromJson } = await import(
     `@/templates/${templateName}/validators/${validatorName}.config.json`
   );
   const parsed = ValidatorConfigSchema.safeParse(validatorConfigsFromJson);
   if (parsed.error) {
-    throw new Error('Validator configuration is invalid');
+    throw new Error(
+      `Validator configuration is invalid:\n${parsed.error.errors
+        .map((e, index) => {
+          console.log(e.path);
+          const errorMessage = `${index + 1}- ${e.message}`;
+          return index % 2 === 0
+            ? ansis.blueBright(errorMessage)
+            : errorMessage;
+        })
+        .join('\n')}`,
+    );
   }
 
   return parsed.data;
@@ -50,12 +60,14 @@ export async function importValidatorConfigs(
 
 export async function importTypesTemplate(
   templateName: string,
-): Promise<{ defaultOutput: string; fallback: string }> {
-  const { default: defaultOutput, fallback } = await import(
+): Promise<string> {
+  const { default: typesTemplate } = await import(
     `@/templates/${templateName}/${templateName}.types`
   );
-  return {
-    defaultOutput,
-    fallback,
-  };
+
+  if (typeof typesTemplate !== 'string') {
+    throw new Error('Default export from template file must be a string');
+  }
+
+  return typesTemplate;
 }

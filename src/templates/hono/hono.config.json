@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "DuckyCoding",
   "tags": ["api", "rest", "hono", "typescript"],
-  "validatorSupport": ["none", "zod", "typebox"],
+  "validatorSupport": ["zod", "typebox"],
   "filename": "hono",
   "placeholders": [
     {
@@ -31,5 +31,9 @@
         "required": true
       }
     }
-  ]
+  ],
+  "dependencies": {
+    "hono": "^4.6.19"
+  },
+  "devDepencencies": {}
 }

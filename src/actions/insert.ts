@@ -6,7 +6,7 @@ import {
   TemplateProcessor,
   type ProcessingOptions,
   type TemplateConfig,
-} from '../utils/template/templateProcessor';
+} from '../processors/TemplateProcessor';
 import {
   importTemplateConfigs,
   importValidatorConfigs,
@@ -80,15 +80,18 @@ export async function insertBoilerplateAction(
   }
 
   // Step 4: Validation type
-  const chosenValidationType =
+  let chosenValidationType =
     commandLineOptions.validatorType &&
-    templateConfigs.validatorSupport.includes(commandLineOptions.validatorType)
-      ? commandLineOptions.validatorType
+    (templateConfigs.validatorSupport.includes(
+      commandLineOptions.validatorType,
+    ) ||
+      commandLineOptions.validatorType.toLowerCase() === 'none')
+      ? commandLineOptions.validatorType.toLowerCase()
       : (
           await select<string>({
             message: 'Choose what type of validation to use:',
-            choices: templateConfigs.validatorSupport,
-            default: templateConfigs.validatorSupport[0],
+            choices: ['none', ...templateConfigs.validatorSupport],
+            default: ['none'],
           })
         ).toLowerCase();
 
@@ -121,7 +124,7 @@ export async function insertBoilerplateAction(
     }));
 
   // Output the collected data (or implement the boilerplate generation logic)
-  console.log('\n✅ Your selections:');
+  console.log('\n📋 Your selections:');
   const SELECTION_CHOICES: Map<string, string> = new Map([
     ['Entity name', `${chosenEntityName}`],
     ['Entity output directory', `${chosenEntityDir}`],
@@ -156,7 +159,9 @@ export async function insertBoilerplateAction(
 
   processor.registerTemplate(chosenTemplate, templateConfigs);
 
-  if (chosenValidationType && chosenValidationType !== 'none') {
+  chosenValidationType =
+    chosenValidationType === 'none' ? 'default' : chosenValidationType;
+  if (chosenValidationType) {
     try {
       const validatorConfigs = await importValidatorConfigs(
         chosenTemplate,
@@ -195,10 +200,10 @@ export async function insertBoilerplateAction(
     });
     if (shouldCreate) {
       fs.mkdirSync(chosenEntityDir, { recursive: true });
-      console.log(`\n📂 Created directory: ${chosenEntityDir}`);
+      console.log(`📂 Created directory: ${chosenEntityDir}`);
     } else process.exit(1);
   } else {
-    console.log(`\n📂⚠️ Directory ${chosenEntityDir} already exists`);
+    console.log(`📂⚠️ Directory ${chosenEntityDir} already exists`);
   }
 
   if (separateTypes && chosenTypesDir) {
@@ -210,10 +215,10 @@ export async function insertBoilerplateAction(
       });
       if (shouldCreate) {
         fs.mkdirSync(chosenTypesDir, { recursive: true });
-        console.log(`\n📂 Created directory: ${chosenTypesDir}`);
+        console.log(`📂 Created directory: ${chosenTypesDir}`);
       } else process.exit(1);
     } else {
-      console.log(`\n📂⚠️ Directory ${chosenEntityDir} already exists`);
+      console.log(`📂⚠️ Directory ${chosenEntityDir} already exists`);
     }
   }
 
@@ -240,7 +245,7 @@ export async function insertBoilerplateAction(
       fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file
       console.log(`📝 Created types file: ${path.resolve(typesFilePath)}`);
     } else {
-      console.log(`\n⚠️ Entity types file already exists at ${typesFilePath}`);
+      console.log(`⚠️ Entity types file already exists at ${typesFilePath}`);
       const shouldOverwrite = await confirm({
         message: 'Do you want to overwrite the existing entity file?',
         default: false,
@@ -266,7 +271,7 @@ export async function insertBoilerplateAction(
     fs.writeFileSync(mainFilePath, mainFileContent);
     console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);
   } else {
-    console.log(`\n⚠️ Entity main file already exists at ${mainFilePath}`);
+    console.log(`⚠️ Entity main file already exists at ${mainFilePath}`);
     const shouldOverwrite = await confirm({
       message: 'Do you want to overwrite the existing entity file?',
       default: false,
@@ -297,4 +302,6 @@ export async function insertBoilerplateAction(
     console.log('=================================================');
     console.log(ansis.greenBright(typesFileContent));
   }
+
+  console.log('\n✨ Boilerplate setup complete!');
 }

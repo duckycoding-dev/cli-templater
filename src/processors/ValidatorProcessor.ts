@@ -2,19 +2,29 @@ import { z } from 'zod';
 
 const validatorPlaceholderDataSchema = z.object({
   description: z.string().optional(),
-  value: z.string().optional().or(z.array(z.string())),
+  value: z.string().or(z.array(z.string())).optional(),
   required: z.boolean().default(false),
 });
 
 export const ValidatorConfigSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  author: z.string(),
-  placeholders: z.record(
-    z.string().regex(/^[a-zA-Z0-9_]+$/), // Placeholder name must be alphanumeric with underscores,
-    validatorPlaceholderDataSchema,
-  ),
-  dependencies: z.record(z.string(), z.string()),
+  name: z.string().min(1, { message: 'Validator name is required' }).optional(),
+  description: z
+    .string()
+    .min(1, { message: 'Validator description is required' })
+    .optional(),
+  author: z
+    .string({ message: 'Author name is required' })
+    .min(1)
+    .default('unknown'),
+  placeholders: z
+    .record(
+      z.string().regex(/^[a-zA-Z0-9_]+$/), // Placeholder name must be alphanumeric with underscores,
+      validatorPlaceholderDataSchema,
+    )
+    .optional()
+    .default({}),
+  dependencies: z.record(z.string(), z.string()).optional(),
+  devDependencies: z.record(z.string(), z.string()).optional(),
 });
 export type ValidatorConfig = z.infer<typeof ValidatorConfigSchema>;
 
@@ -82,14 +92,16 @@ export class ValidatorProcessor {
     this.checkPlaceholdersExistInTemplate(rawTemplate);
 
     // Process the validator configs
-    console.log(`Processing ${this.validatorConfigs.name} validator...`);
+    console.log(
+      `Processing${this.validatorConfigs.name ? ` ${this.validatorConfigs.name}` : ''} validator...`,
+    );
 
     // Replace the placeholders in the template
     // if first character is a newline, remove it
     let processedTemplate = rawTemplate.replace(/^\n/, '');
     if (this.validatorConfigs.placeholders) {
       console.log(
-        `Replacing ${this.validatorConfigs.name} validator placeholders${instance ? ` in ${instance} file` : ''}...`,
+        `Replacing${this.validatorConfigs.name ? ` ${this.validatorConfigs.name}` : ''} validator placeholders${instance ? ` in ${instance} file` : ''}...`,
       );
     }
     for (const [placeholderName, placeholderData] of Object.entries(

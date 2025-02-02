@@ -1,11 +1,3 @@
-import { ValidatorConfig } from '../../utils/validator/validatorProcessor';
-
-/**
- * @type ValidatorConfig
- * @property dependencies: this object is just for reference for now
- * @property devDependencies: this object is just for reference for now
- * @internal
- */
 const validatorConfig = {
   name: '',
   description: '',

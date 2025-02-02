@@ -1,11 +1,8 @@
 import { z } from 'zod';
 import pluralize from 'pluralize';
-import { importTemplate, importTypesTemplate } from '../imports';
-import {
-  ValidatorProcessor,
-  type ValidatorConfig,
-} from '../validator/validatorProcessor';
-import { validateEntityNameInput } from '../entity';
+import { importTemplate, importTypesTemplate } from '../utils/imports';
+import { ValidatorProcessor, type ValidatorConfig } from './ValidatorProcessor';
+import { validateEntityNameInput } from '../utils/entity';
 import ansis from 'ansis';
 /*
  * These placeholders will always be handled by the template processor in a special way
@@ -100,7 +97,9 @@ export const TemplateConfigSchema = z
     tags: z.array(z.string()).optional(),
     version: z.string(),
     placeholders: z.array(TemplatePlaceholderSchema).default([]),
-    validatorSupport: z.array(z.string()).default(['none']),
+    validatorSupport: z.array(z.string()).default(['default']),
+    dependencies: z.record(z.string(), z.string()).optional(),
+    devDependencies: z.record(z.string(), z.string()).optional(),
   })
   .transform((data) => ({
     ...data,
@@ -314,13 +313,10 @@ export class TemplateProcessor {
     const typesTemplate = await importTypesTemplate(templateName);
     if (this.validatorProcessor) {
       importedTypesTemplateContent = this.removeFirstNewline(
-        typesTemplate.defaultOutput ?? typesTemplate.fallback ?? '',
-      );
-    } else {
-      importedTypesTemplateContent = this.removeFirstNewline(
-        typesTemplate.fallback ?? '',
+        typesTemplate ?? '',
       );
     }
+
     if (separateTypes) {
       // add types to separate new file
       this.rawTypesTemplate = importedTypesTemplateContent;
@@ -425,7 +421,7 @@ export class TemplateProcessor {
     this.rawTemplate = await this.loadTemplate(templateConfigs.filename);
 
     const selectedValidatorConfigs = this.validators.get(options.validatorType);
-    if (options.validatorType !== 'none' && selectedValidatorConfigs) {
+    if (selectedValidatorConfigs) {
       this.validatorProcessor = new ValidatorProcessor(
         selectedValidatorConfigs,
       );

@@ -100,15 +100,6 @@ export const TemplateConfigSchema = z
     tags: z.array(z.string()).optional(),
     version: z.string(),
     placeholders: z.array(TemplatePlaceholderSchema).default([]),
-    files: z
-      .array(
-        z.object({
-          defaultPath: z.string().min(1).optional(),
-          outputName: z.string().min(1).optional(),
-          templatePath: z.string().min(1),
-        }),
-      )
-      .min(1),
     validatorSupport: z.array(z.string()).default(['none']),
   })
   .transform((data) => ({
@@ -403,7 +394,6 @@ export class TemplateProcessor {
       tags: template.tags,
       validatorSupport: template.validatorSupport,
       filename: template.filename,
-      files: template.files,
       placeholders: template.placeholders,
     };
   }

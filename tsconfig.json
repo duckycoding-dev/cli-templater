@@ -33,10 +33,11 @@
     "paths": {
       "@/*": ["*"]
     },
-    "declarationDir": "./dist/types",
+    "declarationDir": "./dist",
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "stripInternal": true
   },
   "include": ["./src/**/*"],
-  "exclude": ["./dist/**/*"]
+  "exclude": ["./dist/**/*", "node_modules"]
 }

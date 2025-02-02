@@ -6,18 +6,6 @@
   "tags": ["api", "rest", "hono", "typescript"],
   "validatorSupport": ["none", "zod", "typebox"],
   "filename": "hono",
-  "files": [
-    {
-      "defaultPath": "src",
-      "outputName": "{{entity}}.ts",
-      "templatePath": "hono.ts"
-    },
-    {
-      "defaultPath": "src/types",
-      "outputName": "{{entity}}.ts",
-      "templatePath": "hono.types.ts"
-    }
-  ],
   "placeholders": [
     {
       "entity": {

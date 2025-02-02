@@ -38,6 +38,7 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc && bun unlink && bun link",
-    "start": "bun dist/index.js"
+    "start": "bun dist/index.js",
+    "prebuild": "bun ./src/scripts/copyDirToDist config_structures"
   }
 }

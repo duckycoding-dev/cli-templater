@@ -15,10 +15,19 @@ import { formatEntityName, validateEntityNameInput } from '@/utils/entity';
 import { writeFileWithIncrementalName } from '@/utils/filesystem';
 import { thereIsAtLeastOneDependency } from '@/utils/processors';
 import { printWithHeadings } from '@/utils/logs';
+import { isValidDirectory } from '@/utils/strings';
 
 export async function insertBoilerplateAction(
   commandLineOptions: Partial<
-    ProcessingOptions & { template: string; debug: boolean; print: boolean }
+    ProcessingOptions & {
+      template: string;
+      print: boolean;
+      separateFileForTypes: boolean;
+      makeNewDirectories: boolean;
+      entityDir: string;
+      typesDir: string;
+      overwrite: boolean;
+    }
   >,
 ) {
   console.log('\n💡 Let’s set up your boilerplate!');
@@ -38,16 +47,19 @@ export async function insertBoilerplateAction(
   chosenEntityName = formatEntityName(chosenEntityName, false);
 
   // Step 2: Get base directory
-  const chosenEntityDir = await input({
-    message: 'Enter the entity directory:',
-    default: './src',
-    validate: (input) => {
-      if (input.trim() === '') {
-        return 'Entity directory cannot be empty';
-      }
-      return true;
-    },
-  });
+  const chosenEntityDir =
+    commandLineOptions.entityDir ||
+    (await input({
+      message: 'Enter the entity directory:',
+      default: './src',
+      validate: (input) => {
+        if (input.trim() === '') {
+          return 'Entity directory cannot be empty';
+        }
+        if (!isValidDirectory(input)) return false;
+        return true;
+      },
+    }));
 
   // Step 3: Choose template
 
@@ -59,6 +71,14 @@ export async function insertBoilerplateAction(
   if (templateChoices.length === 0) {
     throw new Error('No templates found in the templates directory');
   }
+
+  if (
+    commandLineOptions.template &&
+    !templateChoices.includes(commandLineOptions.template)
+  )
+    throw new Error(
+      `Template "${commandLineOptions.template}" not found among the existing templates; check for typos or create a new template with that name.`,
+    );
 
   const chosenTemplate =
     commandLineOptions.template &&
@@ -82,6 +102,15 @@ export async function insertBoilerplateAction(
   }
 
   // Step 4: Validation type
+  if (
+    commandLineOptions.validatorType &&
+    commandLineOptions.validatorType !== 'none' &&
+    !templateConfigs.validatorSupport.includes(commandLineOptions.validatorType)
+  )
+    throw new Error(
+      `The template "${commandLineOptions.template}" does not support the validator type "${commandLineOptions.validatorType}"; check for typos or add the validator to the template's validatorSupport array.
+      If no validator is supported, use "none" as the validator type.`,
+    );
   let chosenValidationType =
     commandLineOptions.validatorType &&
     (templateConfigs.validatorSupport.includes(
@@ -98,23 +127,27 @@ export async function insertBoilerplateAction(
         ).toLowerCase();
 
   // Step 5: Generate types in separate file
-  const separateTypes = await confirm({
-    message: 'Do you want generate types to a separate file?',
-    default: true,
-  });
+  const separateTypes =
+    commandLineOptions.separateFileForTypes ||
+    (await confirm({
+      message: 'Do you want generate types to a separate file?',
+      default: true,
+    }));
 
   let chosenTypesDir: string | undefined;
   if (separateTypes) {
-    chosenTypesDir = await input({
-      message: 'Enter the directory for your types:',
-      default: './src/types',
-      validate: (input) => {
-        if (input.trim() === '') {
-          return 'Directory cannot be empty';
-        }
-        return true;
-      },
-    });
+    commandLineOptions.typesDir ||
+      (await input({
+        message: 'Enter the directory for your types:',
+        default: './src/types',
+        validate: (input) => {
+          if (input.trim() === '') {
+            return 'Directory cannot be empty';
+          }
+          if (!isValidDirectory(input)) return false;
+          return true;
+        },
+      }));
   }
 
   // Step 6: Keep comments in generated files
@@ -196,10 +229,12 @@ export async function insertBoilerplateAction(
   // ============================= SETUP OUTPUT DIRECTORIES ==============================
   if (!fs.existsSync(chosenEntityDir)) {
     console.warn(`⚠️ Directory "${chosenEntityDir}" does not exist.`);
-    const shouldCreate = await confirm({
-      message: 'Create it?',
-      default: true,
-    });
+    const shouldCreate =
+      commandLineOptions.makeNewDirectories ||
+      (await confirm({
+        message: 'Create it?',
+        default: true,
+      }));
     if (shouldCreate) {
       fs.mkdirSync(chosenEntityDir, { recursive: true });
       console.log(`📂 Created directory: ${chosenEntityDir}`);
@@ -211,10 +246,12 @@ export async function insertBoilerplateAction(
   if (separateTypes && chosenTypesDir) {
     if (!fs.existsSync(chosenTypesDir)) {
       console.warn(`⚠️ Directory "${chosenTypesDir}" does not exist.`);
-      const shouldCreate = await confirm({
-        message: 'Create it?',
-        default: true,
-      });
+      const shouldCreate =
+        commandLineOptions.makeNewDirectories ||
+        (await confirm({
+          message: 'Create it?',
+          default: true,
+        }));
       if (shouldCreate) {
         fs.mkdirSync(chosenTypesDir, { recursive: true });
         console.log(`📂 Created directory: ${chosenTypesDir}`);
@@ -248,10 +285,12 @@ export async function insertBoilerplateAction(
       console.log(`📝 Created types file: ${path.resolve(typesFilePath)}`);
     } else {
       console.log(`⚠️ Entity types file already exists at ${typesFilePath}`);
-      const shouldOverwrite = await confirm({
-        message: 'Do you want to overwrite the existing entity file?',
-        default: false,
-      });
+      const shouldOverwrite =
+        commandLineOptions.overwrite ||
+        (await confirm({
+          message: 'Do you want to overwrite the existing entity file?',
+          default: false,
+        }));
       if (shouldOverwrite) {
         fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file
         console.log(`📝 Created types file: ${path.resolve(typesFilePath)}`);
@@ -274,10 +313,12 @@ export async function insertBoilerplateAction(
     console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);
   } else {
     console.log(`⚠️ Entity main file already exists at ${mainFilePath}`);
-    const shouldOverwrite = await confirm({
-      message: 'Do you want to overwrite the existing entity file?',
-      default: false,
-    });
+    const shouldOverwrite =
+      commandLineOptions.overwrite ||
+      (await confirm({
+        message: 'Do you want to overwrite the existing entity file?',
+        default: false,
+      }));
     if (shouldOverwrite) {
       fs.writeFileSync(mainFilePath, mainFileContent);
       console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);
@@ -291,18 +332,6 @@ export async function insertBoilerplateAction(
         `📝 Created main file: ${path.resolve(incrementalNameMainFilePath)}`,
       );
     }
-  }
-
-  if (commandLineOptions.print) {
-    const contentToPrint = [
-      { title: 'main file content', content: mainFileContent },
-    ];
-    if (typesFileContent)
-      contentToPrint.push({
-        title: 'types file content',
-        content: typesFileContent,
-      });
-    printWithHeadings(contentToPrint);
   }
 
   console.log('✨ Boilerplate setup complete!\n');
@@ -353,4 +382,16 @@ export async function insertBoilerplateAction(
       },
     );
   });
+
+  if (commandLineOptions.print) {
+    const contentToPrint = [
+      { title: 'main file content', content: mainFileContent },
+    ];
+    if (typesFileContent)
+      contentToPrint.push({
+        title: 'types file content',
+        content: typesFileContent,
+      });
+    printWithHeadings(contentToPrint);
+  }
 }

@@ -92,18 +92,9 @@ export class ValidatorProcessor {
     this.checkPlaceholdersExistInTemplate(rawTemplate);
 
     // Process the validator configs
-    console.log(
-      `Processing${this.validatorConfigs.name ? ` ${this.validatorConfigs.name}` : ''} validator...`,
-    );
-
     // Replace the placeholders in the template
     // if first character is a newline, remove it
     let processedTemplate = rawTemplate.replace(/^\n/, '');
-    if (this.validatorConfigs.placeholders) {
-      console.log(
-        `Replacing${this.validatorConfigs.name ? ` ${this.validatorConfigs.name}` : ''} validator placeholders${instance ? ` in ${instance} file` : ''}...`,
-      );
-    }
     for (const [placeholderName, placeholderData] of Object.entries(
       this.validatorConfigs.placeholders,
     )) {

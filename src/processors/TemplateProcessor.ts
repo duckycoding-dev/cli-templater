@@ -404,6 +404,16 @@ export class TemplateProcessor {
     return this.typesFileContent;
   }
 
+  /** Returns the validators */
+  getValidators() {
+    return this.validators;
+  }
+
+  /** Returns the templates */
+  getTemplates() {
+    return this.templates;
+  }
+
   /** Processes a template with the given options */
   async processTemplate(
     templateName: string,

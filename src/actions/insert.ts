@@ -13,6 +13,8 @@ import {
 } from '../utils/imports';
 import { formatEntityName, validateEntityNameInput } from '@/utils/entity';
 import { writeFileWithIncrementalName } from '@/utils/filesystem';
+import { thereIsAtLeastOneDependency } from '@/utils/processors';
+import { printWithHeadings } from '@/utils/logs';
 
 export async function insertBoilerplateAction(
   commandLineOptions: Partial<
@@ -292,16 +294,63 @@ export async function insertBoilerplateAction(
   }
 
   if (commandLineOptions.print) {
-    console.log('=================================================');
-    console.log('================MAIN FILE CONTENT================');
-    console.log('=================================================');
-    console.log(mainFileContent);
-
-    console.log('=================================================');
-    console.log('===============TYPES FILE CONTENT================');
-    console.log('=================================================');
-    console.log(ansis.greenBright(typesFileContent));
+    const contentToPrint = [
+      { title: 'main file content', content: mainFileContent },
+    ];
+    if (typesFileContent)
+      contentToPrint.push({
+        title: 'types file content',
+        content: typesFileContent,
+      });
+    printWithHeadings(contentToPrint);
   }
 
-  console.log('\n✨ Boilerplate setup complete!');
+  console.log('✨ Boilerplate setup complete!\n');
+
+  if (thereIsAtLeastOneDependency(processor.getTemplates())) {
+    console.log(
+      ansis.cyanBright('Dependencies required by the chosen template'),
+    );
+  }
+  processor.getTemplates().forEach((template) => {
+    if (Object.entries(template?.devDependencies ?? {}).length) {
+      console.log(`${template.name} dependencies:`);
+    }
+    Object.entries(template.dependencies ?? {}).forEach(([name, version]) => {
+      console.log(`"${name}": "${version}"`);
+    });
+
+    if (Object.entries(template?.devDependencies ?? {}).length) {
+      console.log(`${template.name} devDependencies:`);
+    }
+    Object.entries(template.devDependencies ?? {}).forEach(
+      ([name, version]) => {
+        console.log(`"${name}": "${version}"`);
+      },
+    );
+  });
+
+  if (thereIsAtLeastOneDependency(processor.getValidators())) {
+    console.log(
+      ansis.magentaBright('Dependencies required by the used validators'),
+    );
+  }
+
+  processor.getValidators().forEach((validator) => {
+    if (Object.entries(validator?.devDependencies ?? {}).length) {
+      console.log(`${validator.name} dependencies:`);
+    }
+    Object.entries(validator.dependencies ?? {}).forEach(([name, version]) => {
+      console.log(`"${name}": "${version}"`);
+    });
+
+    if (Object.entries(validator?.devDependencies ?? {}).length) {
+      console.log(`${validator.name} devDependencies:`);
+    }
+    Object.entries(validator.devDependencies ?? {}).forEach(
+      ([name, version]) => {
+        console.log(`"${name}": "${version}"`);
+      },
+    );
+  });
 }

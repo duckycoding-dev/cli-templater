@@ -27,6 +27,7 @@ export async function insertBoilerplateAction(
       entityDir: string;
       typesDir: string;
       overwrite: boolean;
+      append: boolean;
     }
   >,
 ) {
@@ -136,7 +137,8 @@ export async function insertBoilerplateAction(
 
   let chosenTypesDir: string | undefined;
   if (separateTypes) {
-    commandLineOptions.typesDir ||
+    chosenTypesDir =
+      commandLineOptions.typesDir ||
       (await input({
         message: 'Enter the directory for your types:',
         default: './src/types',
@@ -285,16 +287,28 @@ export async function insertBoilerplateAction(
       console.log(`📝 Created types file: ${path.resolve(typesFilePath)}`);
     } else {
       console.log(`⚠️ Entity types file already exists at ${typesFilePath}`);
-      const shouldOverwrite =
-        commandLineOptions.overwrite ||
-        (await confirm({
-          message: 'Do you want to overwrite the existing entity file?',
+      let shouldOverwrite = commandLineOptions.overwrite;
+      // if the user didn't specify to overwrite and didn't specify to append, ask for confirmation
+      if (!commandLineOptions.overwrite && !commandLineOptions.append) {
+        shouldOverwrite = await confirm({
+          message: 'Do you want to overwrite the existing types file?',
           default: false,
-        }));
+        });
+      }
       if (shouldOverwrite) {
         fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file
         console.log(`📝 Created types file: ${path.resolve(typesFilePath)}`);
       } else {
+        const appendToExistingFile =
+          commandLineOptions.append ||
+          (await confirm({
+            message:
+              'Do you want to append to the existing types file instead?',
+            default: false,
+          }));
+        if (appendToExistingFile) {
+          fs.appendFileSync(typesFilePath, `\n${typesFileContent}`);
+        }
         const incrementalNameTypesFilePath = writeFileWithIncrementalName(
           typesFilePath,
           typesFileContent ?? '', //the types template might exist and still be empty, we treat this as if the user wanted an empty file
@@ -313,16 +327,27 @@ export async function insertBoilerplateAction(
     console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);
   } else {
     console.log(`⚠️ Entity main file already exists at ${mainFilePath}`);
-    const shouldOverwrite =
-      commandLineOptions.overwrite ||
-      (await confirm({
+    let shouldOverwrite = commandLineOptions.overwrite;
+    // if the user didn't specify to overwrite and didn't specify to append, ask for confirmation
+    if (!commandLineOptions.overwrite && !commandLineOptions.append) {
+      shouldOverwrite = await confirm({
         message: 'Do you want to overwrite the existing entity file?',
         default: false,
-      }));
+      });
+    }
     if (shouldOverwrite) {
       fs.writeFileSync(mainFilePath, mainFileContent);
       console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);
     } else {
+      const appendToExistingFile =
+        commandLineOptions.append ||
+        (await confirm({
+          message: 'Do you want to append to the existing entity file instead?',
+          default: false,
+        }));
+      if (appendToExistingFile) {
+        fs.appendFileSync(mainFilePath, `\n${mainFileContent}`);
+      }
       const incrementalNameMainFilePath = writeFileWithIncrementalName(
         mainFilePath,
         mainFileContent,

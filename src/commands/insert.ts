@@ -28,7 +28,11 @@ export const insertCommand = (program: Command) => {
     )
     .option(
       '-o, --overwrite',
-      'Overwrite existing files (if any) without asking for confirmation - USE WITH CAUTION',
+      'Overwrite existing files (if any) without asking for confirmation - USE WITH CAUTION (this has precedence over the append option)',
+    )
+    .option(
+      '-a, --append',
+      'Append to existing files (if any) without asking for confirmation - USE WITH CAUTION',
     )
     .action(async function () {
       const opts = this.opts();
@@ -44,6 +48,7 @@ export const insertCommand = (program: Command) => {
         entityDir: opts.entityDir?.toLowerCase(),
         typesDir: opts.typesDir?.toLowerCase(),
         overwrite: opts.overwrite,
+        append: opts.append,
       };
 
       const invalidOptions = [];

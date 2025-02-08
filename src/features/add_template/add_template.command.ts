@@ -28,6 +28,10 @@ export const addTemplateCommand = (program: Command) => {
       '-o, --output-extension <OUTPUT EXTENSION>',
       'Set the output extension of the template to create',
     )
+    .option(
+      '-t, --types-file-output-extension <TYPES FILE OUTPUT EXTENSION>',
+      'Set the types file output extension of the template to create',
+    )
     .action(async function () {
       const opts = this.opts();
       const invalidOptionsErrors: string[] = [];
@@ -56,10 +60,22 @@ export const addTemplateCommand = (program: Command) => {
       if (
         opts['output-extension'] &&
         !opts['output-extension'].trim() &&
-        !containsOnlyLettersAndNumbers(opts.filename.trim())
+        !containsOnlyLettersAndNumbers(opts['output-extension'].trim())
       ) {
         invalidOptionsErrors.push(
           'The output extension must not be empty and must only contain letters and numbers: provide a valid value or omit the option flag',
+        );
+      }
+
+      if (
+        opts['types-file-output-extension'] &&
+        !opts['types-file-output-extension'].trim() &&
+        !containsOnlyLettersAndNumbers(
+          opts['types-file-output-extension'].trim(),
+        )
+      ) {
+        invalidOptionsErrors.push(
+          'The types file output extension must not be empty and must only contain letters and numbers: provide a valid value or omit the option flag',
         );
       }
 
@@ -72,6 +88,8 @@ export const addTemplateCommand = (program: Command) => {
         name: opts.name?.trim(),
         filename: opts.filename?.trim(),
         description: opts.description?.trim(),
+        outputExtension: opts['output-extension']?.trim(),
+        typesFileOutputExtension: opts['types-file-output-extension']?.trim(),
       };
       try {
         await addTemplateAction(formattedOptions);

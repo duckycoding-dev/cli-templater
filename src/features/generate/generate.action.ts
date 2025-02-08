@@ -129,11 +129,13 @@ export async function generateBoilerplateAction(
 
   // Step 5: Generate types in separate file
   const separateTypes =
-    commandLineOptions.separateFileForTypes ||
-    (await confirm({
-      message: 'Do you want generate types to a separate file?',
-      default: true,
-    }));
+    (!!templateConfigs.typesFileOutputExtension &&
+      commandLineOptions.separateFileForTypes) ||
+    (!!templateConfigs.typesFileOutputExtension &&
+      (await confirm({
+        message: 'Do you want generate types to a separate file?',
+        default: true,
+      })));
 
   let chosenTypesDir: string | undefined;
   if (separateTypes) {
@@ -167,14 +169,18 @@ export async function generateBoilerplateAction(
     ['Entity output directory', `${chosenEntityDir}`],
     ['Template', `${chosenTemplate}`],
     ['Validation type', `${chosenValidationType}`],
-    [
-      separateTypes && chosenTypesDir
-        ? 'Types output directory'
-        : 'Types saved in entity file',
-      separateTypes && chosenTypesDir ? `${chosenTypesDir}` : '',
-    ],
     ['Keep comments', `${keepComments ? 'Yes' : 'No'}`],
   ]);
+
+  if (templateConfigs.typesFileOutputExtension?.trim()) {
+    SELECTION_CHOICES.set(
+      'Separate types file',
+      `${separateTypes ? 'Yes' : 'No'}`,
+    );
+    if (separateTypes) {
+      SELECTION_CHOICES.set('Types output directory', `${chosenTypesDir}`);
+    }
+  }
 
   let colorIndex = 0;
   let color = ansis.cyanBright;
@@ -280,7 +286,7 @@ export async function generateBoilerplateAction(
     }
     const typesFilePath = path.join(
       chosenTypesDir,
-      `${chosenEntityName}${typesFileSuffix}.ts`,
+      `${chosenEntityName}${typesFileSuffix}.${templateConfigs.typesFileOutputExtension}`,
     );
     if (!fs.existsSync(typesFilePath)) {
       fs.writeFileSync(typesFilePath, typesFileContent ?? ''); //the types template might exist and still be empty, we treat this as if the user wanted an empty file

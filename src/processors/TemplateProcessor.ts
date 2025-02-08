@@ -98,6 +98,7 @@ export const TemplateConfigSchema = z
   .object({
     filename: z.string().min(1, 'Filename is required'),
     outputExtension: z.string({ message: 'Output extension is required' }),
+    typesFileOutputExtension: z.string().optional(),
     name: z.string().optional(),
     description: z.string().optional(),
     placeholders: z.array(TemplatePlaceholderSchema).default([]),
@@ -391,7 +392,9 @@ export class TemplateProcessor {
     }
 
     // 3. Inject types
-    await this.injectTypes(templateName, options.separateTypes);
+    if (templateConfigs.typesFileOutputExtension?.trim()) {
+      await this.injectTypes(templateName, options.separateTypes);
+    }
 
     // 4. Inject validator-specific code
     if (this.validatorProcessor) {

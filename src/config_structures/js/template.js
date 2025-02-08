@@ -4,6 +4,7 @@ const templateConfig = {
   validatorSupport: [''],
   filename: 'NAME_OF_THE_GENERATED_TEMPLATE_FILE',
   outputExtension: 'js',
+  typesFileOutputExtension: 'ts',
   placeholders: [
     {
       entity: {

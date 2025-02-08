@@ -11,6 +11,7 @@ export type AddTemplateOptions = {
   filename?: string;
   name?: string;
   description?: string;
+  outputExtension?: string;
 };
 
 export const addTemplateAction = async (options: AddTemplateOptions) => {
@@ -34,7 +35,7 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
       message: 'Enter the generated template filename:',
       validate: (input) => {
         if (!input.trim()) return 'Template filename cannot be empty.';
-        if (containsOnlyLettersNumbersUnderscoresAndDashes(input))
+        if (!containsOnlyLettersNumbersUnderscoresAndDashes(input))
           return 'The filename must not be empty and must only contain letters, numbers, underscores and dashes';
         return true;
       },
@@ -60,7 +61,19 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
     fs.rmSync(templatePath, { recursive: true });
   }
 
-  // Step 4: Get required placeholders
+  // Step 4: Get output extension
+  const templateOutputExtension =
+    options.outputExtension ||
+    (await input({
+      message:
+        'Enter the output file extension (e.g.: "ts", "js", "md", "html"):',
+      validate: (input) => {
+        if (!input.trim()) return 'Output extension cannot be empty.';
+        return true;
+      },
+    }));
+
+  // Step 5: Get required placeholders
   const requiredPlaceholders = await input({
     message:
       'Enter required placeholders (comma-separated, e.g.: "entity, Entity, entities"), or pass empty if you you don\'t want any:',
@@ -71,7 +84,7 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
     .map((key) => key.trim())
     .filter(Boolean);
 
-  // Step 5: Get optional placeholders
+  // Step 6: Get optional placeholders
   const optionalPlaceholders = await input({
     message:
       'Enter optional placeholders (comma-separated, e.g.: "imports, types"), or pass empty if you you don\'t want any:',
@@ -82,7 +95,7 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
     .map((key) => key.trim())
     .filter(Boolean);
 
-  // Step 6: Choose validator support
+  // Step 7: Choose validator support
   const validatorSupport = await input({
     message:
       'Enter supported validation types (comma-separated, e.g.: "zod, yup"), or pass empty if you you don\'t want any:',
@@ -117,7 +130,7 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
       return acc;
     }, {});
 
-  // Step 8: Choose dependencies if any
+  // Step 9: Choose dependencies if any
   const dependenciesInput = await input({
     message:
       'Enter recommended dependencies (comma-separated, e.g.: "lodash@^4.17.21, axios@^0.21.1"), or pass empty if you don\'t want any:',
@@ -141,11 +154,15 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
       return acc;
     }, {});
 
-  // Step 9: Create template directory & files
+  // Step 10: Create template directory & files
   fs.mkdirSync(templatePath, { recursive: true });
 
   // Config file
   const config: TemplateConfig = {
+    name: templateName,
+    description: templateDescription,
+    filename: templateFilename,
+    validatorSupport: validators,
     placeholders: requiredKeys
       .map((placeholder) => ({
         [placeholder]: {
@@ -161,15 +178,17 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
           },
         })),
       ),
-    validatorSupport: validators,
-    filename: templateFilename,
-    name: templateName,
-    description: templateDescription,
-    devDependencies: templateDevDependencies,
+    outputExtension: templateOutputExtension,
     dependencies: templateDependencies,
+    devDependencies: templateDevDependencies,
   };
   fs.writeFileSync(
-    path.join(templatePath, 'config.json'),
+    path.join(templatePath, `${templateFilename}.config.json`),
+    JSON.stringify(config, null, 2),
+  );
+
+  fs.writeFileSync(
+    path.join(templatePath, `${templateFilename}.types.ts`),
     JSON.stringify(config, null, 2),
   );
 

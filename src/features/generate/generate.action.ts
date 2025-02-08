@@ -64,7 +64,7 @@ export async function generateBoilerplateAction(
 
   // Step 3: Choose template
 
-  const templatesDir = path.resolve(__dirname, '../templates');
+  const templatesDir = path.resolve(__dirname, '../../templates');
   const templateChoices = fs.readdirSync(templatesDir).filter((file) => {
     return fs.statSync(path.join(templatesDir, file)).isDirectory();
   });
@@ -321,7 +321,10 @@ export async function generateBoilerplateAction(
     }
   }
 
-  const mainFilePath = path.join(chosenEntityDir, `${chosenEntityName}.ts`);
+  const mainFilePath = path.join(
+    chosenEntityDir,
+    `${chosenEntityName}.${templateConfigs.outputExtension}`,
+  );
   if (!fs.existsSync(mainFilePath)) {
     fs.writeFileSync(mainFilePath, mainFileContent);
     console.log(`📝 Created main file: ${path.resolve(mainFilePath)}`);

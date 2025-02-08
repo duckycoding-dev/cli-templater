@@ -3,6 +3,7 @@ const templateConfig = {
   description: '',
   validatorSupport: [''],
   filename: 'NAME_OF_THE_GENERATED_TEMPLATE_FILE',
+  outputExtension: 'js',
   placeholders: [
     {
       entity: {

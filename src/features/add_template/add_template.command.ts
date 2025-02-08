@@ -1,5 +1,5 @@
 import {
-  containsOnlyLettersNumbersAndUnderscores,
+  containsOnlyLettersAndNumbers,
   containsOnlyLettersNumbersUnderscoresAndDashes,
 } from 'utils/strings';
 import {
@@ -24,24 +24,42 @@ export const addTemplateCommand = (program: Command) => {
       '-d, --description <DESCRIPTION>',
       'Set the description of the template to create',
     )
+    .option(
+      '-o, --output-extension <OUTPUT EXTENSION>',
+      'Set the output extension of the template to create',
+    )
     .action(async function () {
       const opts = this.opts();
       const invalidOptionsErrors: string[] = [];
+      console.log(opts);
 
-      if (!opts.name?.trim())
-        invalidOptionsErrors.push('The template name must not be empty');
-      if (!opts.description?.trim())
+      if (opts.name && !opts.name?.trim())
+        invalidOptionsErrors.push(
+          'The template name must not be empty: provide a valid name or omit the option flag',
+        );
+
+      if (opts.description && !opts.description?.trim())
         invalidOptionsErrors.push(
           'The template description must not be empty: either provide one or omit the option flag',
         );
 
       if (
-        !opts.filename ||
-        !opts.filename.trim() ||
-        containsOnlyLettersNumbersUnderscoresAndDashes(opts.filename.trim())
+        opts.filename &&
+        !opts.filename.trim() &&
+        !containsOnlyLettersNumbersUnderscoresAndDashes(opts.filename.trim())
       ) {
         invalidOptionsErrors.push(
-          'The filename must not be empty and must only contain letters, numbers, underscores and dashes',
+          'The filename must not be empty and must only contain letters, numbers, underscores and dashes: provide a valid value or omit the option flag',
+        );
+      }
+
+      if (
+        opts['output-extension'] &&
+        !opts['output-extension'].trim() &&
+        !containsOnlyLettersAndNumbers(opts.filename.trim())
+      ) {
+        invalidOptionsErrors.push(
+          'The output extension must not be empty and must only contain letters and numbers: provide a valid value or omit the option flag',
         );
       }
 

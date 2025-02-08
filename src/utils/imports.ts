@@ -27,7 +27,16 @@ export async function importTemplateConfigs(
   );
   const parsed = TemplateConfigSchema.safeParse(templateConfigsFromJson);
   if (parsed.error) {
-    throw new Error('Template configuration is invalid');
+    throw new Error(
+      `Template configuration is invalid\n${parsed.error.errors
+        .map((e, index) => {
+          const errorMessage = `${index + 1}- ${e.message}`;
+          return index % 2 === 0
+            ? ansis.blueBright(errorMessage)
+            : errorMessage;
+        })
+        .join('\n')}`,
+    );
   }
 
   return parsed.data;
@@ -45,7 +54,6 @@ export async function importValidatorConfigs(
     throw new Error(
       `Validator configuration is invalid:\n${parsed.error.errors
         .map((e, index) => {
-          console.log(e.path);
           const errorMessage = `${index + 1}- ${e.message}`;
           return index % 2 === 0
             ? ansis.blueBright(errorMessage)

@@ -97,6 +97,7 @@ const TemplatePlaceholderSchema = z.record(
 export const TemplateConfigSchema = z
   .object({
     filename: z.string().min(1, 'Filename is required'),
+    outputExtension: z.string({ message: 'Output extension is required' }),
     name: z.string().optional(),
     description: z.string().optional(),
     placeholders: z.array(TemplatePlaceholderSchema).default([]),

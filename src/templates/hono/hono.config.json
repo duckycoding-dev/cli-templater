@@ -3,6 +3,7 @@
   "description": "A REST API template using Hono framework with validation support",
   "validatorSupport": ["zod", "typebox"],
   "filename": "hono",
+  "outputExtension": "xml",
   "placeholders": [
     {
       "entity": {

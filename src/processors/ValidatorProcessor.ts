@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import ansis from 'ansis';
 
 const validatorPlaceholderDataSchema = z.object({
   description: z.string().optional(),
@@ -48,8 +49,14 @@ export class ValidatorProcessor {
     const parsed = ValidatorConfigSchema.safeParse(validatorConfigs);
     if (parsed.error) {
       throw new Error(
-        `${validatorConfigs.name ? `${validatorConfigs.name} validator` : 'Validator'} configs are not valid: ` +
-          parsed.error.errors.join(', '),
+        `${validatorConfigs.name ? `${validatorConfigs.name} validator` : 'Validator'} configs are not valid:\n${parsed.error.errors
+          .map((e, index) => {
+            const errorMessage = `${index + 1}- ${e.message}`;
+            return index % 2 === 0
+              ? ansis.blueBright(errorMessage)
+              : errorMessage;
+          })
+          .join('\n')}`,
       );
     }
   }

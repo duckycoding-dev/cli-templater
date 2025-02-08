@@ -14,6 +14,10 @@ export function containsOnlyLettersNumbersUnderscoresAndDashes(text: string) {
   return /^[a-zA-Z0-9_-]+([a-zA-Z0-9_-]+)*$/.test(text);
 }
 
+export function containsOnlyLettersAndNumbers(text: string) {
+  return /^[a-zA-Z0-9]+([a-zA-Z0-9]+)*$/.test(text);
+}
+
 export function startsWithNumber(text: string) {
   return /^[0-9]/.test(text);
 }

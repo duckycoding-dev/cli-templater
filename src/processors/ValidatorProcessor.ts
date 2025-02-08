@@ -12,10 +12,6 @@ export const ValidatorConfigSchema = z.object({
     .string()
     .min(1, { message: 'Validator description is required' })
     .optional(),
-  author: z
-    .string({ message: 'Author name is required' })
-    .min(1)
-    .default('unknown'),
   placeholders: z
     .record(
       z.string().regex(/^[a-zA-Z0-9_]+$/), // Placeholder name must be alphanumeric with underscores,

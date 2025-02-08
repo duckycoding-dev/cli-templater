@@ -1,12 +1,12 @@
-import { insertBoilerplateAction } from './insert.action';
+import { generateBoilerplateAction } from './generate.action';
 import { isValidDirectory } from '../../utils/strings';
 import type { Command } from 'commander';
 
-export const insertCommand = (program: Command) => {
+export const generateCommand = (program: Command) => {
   return program
-    .command('insert')
+    .command('generate')
     .description(
-      'Insert boilerplate code by choosing from an existing template',
+      'Generate boilerplate code by choosing from an existing template',
     )
     .option('-e, --entity <ENTITY NAME>', 'Set default entity name to use')
     .option('-t, --template <TEMPLATE NAME>', 'Set default template to use')
@@ -51,25 +51,29 @@ export const insertCommand = (program: Command) => {
         append: opts.append,
       };
 
-      const invalidOptions = [];
+      const invalidOptionsErrors = [];
       if (
         formattedOptions.entityDir &&
         !isValidDirectory(formattedOptions.entityDir)
       )
-        invalidOptions.push('The entity directory you provided is invalid');
+        invalidOptionsErrors.push(
+          'The entity directory you provided is invalid',
+        );
       if (
         formattedOptions.typesDir &&
         !isValidDirectory(formattedOptions.typesDir)
       )
-        invalidOptions.push('The types directory you provided is invalid');
+        invalidOptionsErrors.push(
+          'The types directory you provided is invalid',
+        );
 
-      if (invalidOptions.length > 0) {
-        invalidOptions.forEach((option) => console.error(`❌ ${option}`));
+      if (invalidOptionsErrors.length > 0) {
+        invalidOptionsErrors.forEach((option) => console.error(`❌ ${option}`));
         process.exit(1);
       }
 
       try {
-        await insertBoilerplateAction(formattedOptions);
+        await generateBoilerplateAction(formattedOptions);
       } catch (err) {
         console.error(`❌ ${(err as Error).message}`);
         process.exit(1);

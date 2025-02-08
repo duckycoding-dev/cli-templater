@@ -1,7 +1,6 @@
 {
   "name": "TypeBox Validator",
   "description": "TypeBox schema validation for Hono",
-  "author": "DuckyCoding",
   "placeholders": {
     "validatorImports": {
       "value": ["import { tbValidator } from '@hono/typebox-validator'"],

@@ -2,7 +2,7 @@
 import { Command } from 'commander';
 import { version } from '../package.json'; // could check if this is of any security concern
 import { welcome } from './features/welcome/welcome';
-import { insertCommand } from './features/insert/insert.command';
+import { generateCommand } from './features/generate/generate.command';
 import { addTemplateCommand } from './features/add_template/add_template.command';
 
 const program = new Command();
@@ -18,7 +18,7 @@ program
   )
   .version(version);
 
-insertCommand(program);
+generateCommand(program);
 addTemplateCommand(program);
 
 program.parse(process.argv);

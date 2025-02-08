@@ -1,9 +1,6 @@
 const templateConfig = {
   name: 'HUMAN_READABLE_NAME_MORE_INFORMATIVE_THAN_THE_FILENAME',
   description: '',
-  version: '',
-  author: '',
-  tags: [''],
   validatorSupport: [''],
   filename: 'NAME_OF_THE_GENERATED_TEMPLATE_FILE',
   placeholders: [
@@ -27,6 +24,12 @@ const templateConfig = {
       },
     },
   ],
+  dependencies: {
+    PACKAGEJSON_DEP: 'SEMVER_VERSION',
+  },
+  devDepencencies: {
+    PACKAGEJSON_DEV_DEP: 'SEMVER_VERSION',
+  },
 };
 
 export default templateConfig;

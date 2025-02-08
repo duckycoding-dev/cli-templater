@@ -1,9 +1,6 @@
 {
   "name": "Hono REST API",
   "description": "A REST API template using Hono framework with validation support",
-  "version": "1.0.0",
-  "author": "DuckyCoding",
-  "tags": ["api", "rest", "hono", "typescript"],
   "validatorSupport": ["zod", "typebox"],
   "filename": "hono",
   "placeholders": [

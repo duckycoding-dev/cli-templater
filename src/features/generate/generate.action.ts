@@ -17,7 +17,7 @@ import { thereIsAtLeastOneDependency } from '../../utils/processors';
 import { printWithHeadings } from '../../utils/logs';
 import { isValidDirectory } from '../../utils/strings';
 
-export async function insertBoilerplateAction(
+export async function generateBoilerplateAction(
   commandLineOptions: Partial<
     ProcessingOptions & {
       template: string;

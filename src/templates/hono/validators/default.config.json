@@ -1,7 +1,6 @@
 {
   "name": "default validator",
   "description": "Default validator for Hono",
-  "author": "DuckyCoding",
   "placeholders": {
     "type": {
       "description": "The type of the entity",

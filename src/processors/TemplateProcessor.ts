@@ -98,10 +98,7 @@ export const TemplateConfigSchema = z
   .object({
     filename: z.string().min(1, 'Filename is required'),
     name: z.string().optional(),
-    author: z.string().optional(),
     description: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    version: z.string(),
     placeholders: z.array(TemplatePlaceholderSchema).default([]),
     validatorSupport: z.array(z.string()).default(['default']),
     dependencies: z.record(z.string(), z.string()).optional(),

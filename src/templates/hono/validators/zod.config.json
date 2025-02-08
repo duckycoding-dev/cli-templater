@@ -1,7 +1,6 @@
 {
   "name": "Zod Validator",
   "description": "Zod schema validation for Hono",
-  "author": "DuckyCoding",
   "placeholders": {
     "validatorImports": {
       "value": ["import { zValidator } from '@hono/zod-validator';"],

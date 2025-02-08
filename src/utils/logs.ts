@@ -1,4 +1,4 @@
-import ansis from 'ansis';
+import ansis, { Ansis } from 'ansis';
 
 export function printWithHeadings(
   data:
@@ -6,7 +6,7 @@ export function printWithHeadings(
     | { title: string; content: string }[],
 ) {
   if (Array.isArray(data)) {
-    let colorText: Function;
+    let colorText: Ansis;
     data.forEach(({ title, content }, index) => {
       if (index % 2 === 0) {
         colorText = ansis.cyanBright;

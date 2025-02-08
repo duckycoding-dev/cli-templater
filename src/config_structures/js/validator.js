@@ -1,7 +1,6 @@
 const validatorConfig = {
   name: '',
   description: '',
-  author: '',
   placeholders: {
     stringThatWillBeReplaced: {
       value: [''],

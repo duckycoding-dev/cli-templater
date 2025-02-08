@@ -2,8 +2,16 @@ export function removeExtraSpaces(text: string) {
   return text.trim().replace(/(?:\s*\s)+/g, '_');
 }
 
+export function containsOnlyLettersNumbersAndUnderscores(text: string) {
+  return /^[a-zA-Z0-9_]+([a-zA-Z0-9_]+)*$/.test(text);
+}
+
 export function containsOnlyLettersNumbersSpacesAndUnderscores(text: string) {
   return /^[a-zA-Z0-9_]+( [a-zA-Z0-9_]+)*$/.test(text);
+}
+
+export function containsOnlyLettersNumbersUnderscoresAndDashes(text: string) {
+  return /^[a-zA-Z0-9_-]+([a-zA-Z0-9_-]+)*$/.test(text);
 }
 
 export function startsWithNumber(text: string) {

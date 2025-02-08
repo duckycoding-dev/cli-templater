@@ -1,4 +1,4 @@
-import { insertBoilerplateAction } from '@/actions/insert';
+import { insertBoilerplateAction } from '@/features/insert/insert.action';
 import { isValidDirectory } from '@/utils/strings';
 import type { Command } from 'commander';
 

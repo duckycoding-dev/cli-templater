@@ -6,11 +6,11 @@ import {
   TemplateProcessor,
   type ProcessingOptions,
   type TemplateConfig,
-} from '../processors/TemplateProcessor';
+} from '../../processors/TemplateProcessor';
 import {
   importTemplateConfigs,
   importValidatorConfigs,
-} from '../utils/imports';
+} from '../../utils/imports';
 import { formatEntityName, validateEntityNameInput } from '@/utils/entity';
 import { writeFileWithIncrementalName } from '@/utils/filesystem';
 import { thereIsAtLeastOneDependency } from '@/utils/processors';

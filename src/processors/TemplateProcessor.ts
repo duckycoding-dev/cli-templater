@@ -4,6 +4,12 @@ import { importTemplate, importTypesTemplate } from '../utils/imports';
 import { ValidatorProcessor, type ValidatorConfig } from './ValidatorProcessor';
 import { validateEntityNameInput } from '../utils/entity';
 import ansis from 'ansis';
+import {
+  normalizeCommas,
+  removeMultipleEmptyLines,
+  removeFirstNewline,
+} from '@/utils/strings';
+
 /*
  * These placeholders will always be handled by the template processor in a special way
  * and are available in all templates
@@ -174,9 +180,9 @@ export class TemplateProcessor {
     this.registerHook('pre-process', this.validateOptions);
     this.registerHook('post-process', this.removeCommentsIfNeeded);
     this.registerHook('post-process', this.removeLeftoverPlaceholders);
-    this.registerHook('post-process', this.normalizeCommas);
-    this.registerHook('post-process', this.removeMultipleEmptyLines);
-    this.registerHook('post-process', this.removeFirstNewline);
+    this.registerHook('post-process', normalizeCommas);
+    this.registerHook('post-process', removeMultipleEmptyLines);
+    this.registerHook('post-process', removeFirstNewline);
   }
 
   /** Registers a new template */
@@ -312,9 +318,7 @@ export class TemplateProcessor {
     let importedTypesTemplateContent = '';
     const typesTemplate = await importTypesTemplate(templateName);
     if (this.validatorProcessor) {
-      importedTypesTemplateContent = this.removeFirstNewline(
-        typesTemplate ?? '',
-      );
+      importedTypesTemplateContent = removeFirstNewline(typesTemplate ?? '');
     }
 
     if (separateTypes) {
@@ -343,55 +347,6 @@ export class TemplateProcessor {
   /** Removes leftover placeholders from the processed code */
   private removeLeftoverPlaceholders(text: string): string {
     return text.replace(/\{\{[^}]+\}\}/g, '');
-  }
-
-  /** Replaces leftover multiple commas */
-  private normalizeCommas(text: string) {
-    // First replace multiple comma patterns (with spaces before)
-    let result = text.replace(/(?:\s*,)+/g, ',');
-
-    // Then replace semicolon + spaces + comma with just semicolon
-    result = result.replace(/;\s*,/g, ';');
-    return result;
-  }
-
-  /** Remove multiple empty lines */
-  private removeMultipleEmptyLines(text: string) {
-    // reduce multiple empty lines to single empty line
-    // this regex matches multiple empty lines and replaces them with a single empty line
-    return text.replace(/^\s*$(?:\r\n?|\n)/gm, '\n');
-  }
-
-  /** Remove first character if it is a newline character*/
-  private removeFirstNewline(text: string) {
-    return text.replace(/^\n/, '');
-  }
-
-  /** Returns available templates */
-  getAvailableTemplatesNames(): string[] {
-    return Array.from(this.templates.keys());
-  }
-
-  /** Returns available validators */
-  getAvailableValidatorsNames(): string[] {
-    return Array.from(this.validators.keys());
-  }
-
-  /** Returns template metadata */
-  getTemplateConfigs(name: string): TemplateConfig | undefined {
-    const template = this.templates.get(name);
-    if (!template) return undefined;
-
-    return {
-      name: template.name,
-      description: template.description,
-      version: template.version,
-      author: template.author,
-      tags: template.tags,
-      validatorSupport: template.validatorSupport,
-      filename: template.filename,
-      placeholders: template.placeholders,
-    };
   }
 
   /** Returns generated main file content */

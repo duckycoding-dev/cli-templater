@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { version } from '../package.json'; // could check if this is of any security concern
-import { welcome } from './actions/welcome';
-import { insertCommand } from './commands/insert';
-import { addTemplateCommand } from './commands/add_template';
+import { welcome } from './features/welcome/welcome';
+import { insertCommand } from './features/insert/insert.command';
+import { addTemplateCommand } from './features/add_template/add_template.command';
 
 const program = new Command();
 

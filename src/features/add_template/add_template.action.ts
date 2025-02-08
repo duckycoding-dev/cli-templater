@@ -5,6 +5,8 @@ import ansis from 'ansis';
 import {
   containsOnlyLettersAndNumbers,
   containsOnlyLettersNumbersUnderscoresAndDashes,
+  removeFirstNewline,
+  removeMultipleEmptyLines,
 } from 'utils/strings';
 import type { TemplateConfig } from 'processors/TemplateProcessor';
 
@@ -221,24 +223,47 @@ export const addTemplateAction = async (options: AddTemplateOptions) => {
   if (templateTypesFileOutputExtension) {
     fs.writeFileSync(
       path.join(templatePath, `${templateFilename}.types.js`),
-      JSON.stringify(config, null, 2),
+      '',
     );
   }
 
   // Sample template file
   let templateContent = '';
-  if (requiredKeys.length) {
+  const filteredRequiredKeys = requiredKeys.filter((key) => {
+    if (key === 'types') return templateTypesFileOutputExtension ? false : true;
+    else {
+      return true;
+    }
+  });
+  if (filteredRequiredKeys.length) {
     templateContent += '// Required placeholders you must use\n';
   }
-  templateContent += requiredKeys.map((key) => `// - {{${key}}}`).join('\n');
-  if (optionalKeys.length) {
-    templateContent += '\n// Optional placeholders you could\n';
+  templateContent += filteredRequiredKeys
+    .map((key) => `// - {{${key}}}`)
+    .join('\n');
+
+  const filteredOptionalKeys = optionalKeys.filter((key) => {
+    if (key === 'types') return templateTypesFileOutputExtension ? false : true;
+    else {
+      return true;
+    }
+  });
+  if (filteredOptionalKeys.length) {
+    templateContent += '\n\n// Optional placeholders you could use\n';
   }
-  templateContent += optionalKeys.map((key) => `// - {{${key}}}`).join('\n');
+  templateContent += filteredOptionalKeys
+    .map((key) => `// - {{${key}}}`)
+    .join('\n');
+
+  if (templateTypesFileOutputExtension) {
+    templateContent += '\n\n// Types file is available\n';
+    templateContent += `// Use following ${requiredKeys.includes('types') ? 'required' : 'optional'} placeholder (provided by the @cli-templater default placeholders) where you want to include types when not generating a separate types file\n`;
+    templateContent += `// - {{types}}\n`;
+  }
 
   fs.writeFileSync(
     path.join(templatePath, `${templateFilename}.js`),
-    templateContent,
+    removeFirstNewline(removeMultipleEmptyLines(templateContent)),
   );
 
   console.log(ansis.green('\n✅ Template created successfully!'));

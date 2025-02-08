@@ -16,78 +16,57 @@ import {
  * If the user provides a placeholder with the same name, it will override these
  * Thus, if the user wants to make these placeholders NOT optional, they should set `required` to `true`
  */
-const DEFAULT_TEMPLATE_PLACEHOLDERS = [
-  {
-    entity: {
-      description: 'The name of the entity, camelCase format',
-      required: false,
-    },
+
+export const DEFAULT_TEMPLATE_PLACEHOLDERS: TemplatePlaceholderSchema = {
+  entity: {
+    description: 'The name of the entity, camelCase format',
+    required: false,
   },
-  {
-    entities: {
-      description: 'The name of the entity in plural form, camelCase format',
-      required: false,
-    },
+  entities: {
+    description: 'The name of the entity in plural form, camelCase format',
+    required: false,
   },
-  {
-    Entity: {
-      description: 'The name of the entity in PascalCase',
-      required: false,
-    },
+  Entity: {
+    description: 'The name of the entity in PascalCase',
+    required: false,
   },
-  {
-    Entities: {
-      description: 'The name of the entity in plural form, in PascalCase',
-      required: false,
-    },
+  Entities: {
+    description: 'The name of the entity in plural form, in PascalCase',
+    required: false,
   },
-  {
-    entity_: {
-      description: 'The name of the entity, snake_case format',
-      required: false,
-    },
+  entity_: {
+    description: 'The name of the entity, snake_case format',
+    required: false,
   },
-  {
-    entities_: {
-      description: 'The name of the entity in plural form, snake_case format',
-      required: false,
-    },
+  entities_: {
+    description: 'The name of the entity in plural form, snake_case format',
+    required: false,
   },
-  {
-    ENTITY_: {
-      description: 'The name of the entity, SCREAMING_SNAKE_CASE format',
-      required: false,
-    },
+  ENTITY_: {
+    description: 'The name of the entity, SCREAMING_SNAKE_CASE format',
+    required: false,
   },
-  {
-    ENTITIES_: {
-      description:
-        'The name of the entity in plural form, SCREAMING_SNAKE_CASE format',
-      required: false,
-    },
+  ENTITIES_: {
+    description:
+      'The name of the entity in plural form, SCREAMING_SNAKE_CASE format',
+    required: false,
   },
-  {
-    'entity-': {
-      description: 'The name of the entity, kebab-case format',
-      required: false,
-    },
+  'entity-': {
+    description: 'The name of the entity, kebab-case format',
+    required: false,
   },
-  {
-    'entities-': {
-      description: 'The name of the entity in plural form, kebab-case format',
-      required: false,
-    },
+  'entities-': {
+    description: 'The name of the entity in plural form, kebab-case format',
+    required: false,
   },
-  {
-    types: {
-      description: 'Types definitions for the entity',
-      required: false,
-    },
+  types: {
+    description: 'Types definitions for the entity',
+    required: false,
   },
-] as const satisfies TemplatePlaceholderSchema[];
+};
 
 const TemplatePlaceholderSchema = z.record(
-  z.string(),
+  z.string().regex(/^[a-zA-Z0-9_-]+$/),
   z.object({
     description: z.string().optional(),
     required: z.boolean().default(false),
@@ -101,7 +80,7 @@ export const TemplateConfigSchema = z
     typesFileOutputExtension: z.string().optional(),
     name: z.string().optional(),
     description: z.string().optional(),
-    placeholders: z.array(TemplatePlaceholderSchema).default([]),
+    placeholders: TemplatePlaceholderSchema.default({}),
     validatorSupport: z.array(z.string()).default(['default']),
     dependencies: z.record(z.string(), z.string()).optional(),
     devDependencies: z.record(z.string(), z.string()).optional(),
@@ -166,6 +145,7 @@ export class TemplateProcessor {
   private mainFileContent?: string;
   private rawTypesTemplate?: string;
   private typesFileContent?: string;
+  private notFoundPlaceholders: Map<string, boolean>;
 
   constructor() {
     this.templates = new Map();
@@ -174,6 +154,7 @@ export class TemplateProcessor {
       'pre-process': [],
       'post-process': [],
     };
+    this.notFoundPlaceholders = new Map();
 
     // Register built-in processing hooks
     this.registerHook('pre-process', this.validateOptions);
@@ -332,6 +313,36 @@ export class TemplateProcessor {
     }
   }
 
+  private checkPlaceholdersExistInTemplate(
+    template: string,
+    templateConfigs: TemplateConfig,
+  ) {
+    for (const placeholder of Object.keys(templateConfigs.placeholders)) {
+      if (template.includes(`{{${placeholder}}}`)) {
+        this.notFoundPlaceholders.delete(placeholder);
+      }
+    }
+  }
+
+  private alertOrThrowForMissingPlaceholders() {
+    console.log(
+      "🔎 These are all the placeholders that were listed in the validator's config file but not found in the template:",
+    );
+    let requiredPlaceholdersMessage = '';
+    for (const [placeholder, required] of this.notFoundPlaceholders) {
+      if (required) {
+        requiredPlaceholdersMessage += `🚨 Validator's placeholder {{${placeholder}}}, marked as required, was not found in template\n`;
+      } else {
+        console.warn(
+          `⚠️ Validator's placeholder {{${placeholder}}} missing but not required...`,
+        );
+      }
+    }
+    if (requiredPlaceholdersMessage.length > 0) {
+      throw new Error(requiredPlaceholdersMessage);
+    }
+  }
+
   /** Removes comments */
   private removeCommentsIfNeeded(
     text: string,
@@ -383,6 +394,18 @@ export class TemplateProcessor {
     }
 
     this.rawTemplate = await this.loadTemplate(templateConfigs.filename);
+
+    this.notFoundPlaceholders = new Map(
+      Object.entries(templateConfigs.placeholders).map(
+        ([placeholderName, placeholderData]) => [
+          placeholderName,
+          placeholderData.required ?? false,
+        ],
+      ),
+    );
+
+    this.checkPlaceholdersExistInTemplate(this.rawTemplate, templateConfigs);
+    this.alertOrThrowForMissingPlaceholders();
 
     const selectedValidatorConfigs = this.validators.get(options.validatorType);
     if (selectedValidatorConfigs) {

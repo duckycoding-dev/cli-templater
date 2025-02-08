@@ -4,7 +4,7 @@ import {
 } from '../processors/TemplateProcessor';
 import ansis from 'ansis';
 import {
-  ValidatorConfigSchema,
+  validatorConfigSchema,
   type ValidatorConfig,
 } from '../processors/ValidatorProcessor';
 
@@ -49,7 +49,7 @@ export async function importValidatorConfigs(
   const { default: validatorConfigsFromJson } = await import(
     `../templates/${templateName}/validators/${validatorName}.config.json`
   );
-  const parsed = ValidatorConfigSchema.safeParse(validatorConfigsFromJson);
+  const parsed = validatorConfigSchema.safeParse(validatorConfigsFromJson);
   if (parsed.error) {
     throw new Error(
       `Validator configuration is invalid:\n${parsed.error.errors

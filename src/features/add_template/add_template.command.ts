@@ -35,7 +35,6 @@ export const addTemplateCommand = (program: Command) => {
     .action(async function () {
       const opts = this.opts();
       const invalidOptionsErrors: string[] = [];
-      console.log(opts);
 
       if (opts.name && !opts.name?.trim())
         invalidOptionsErrors.push(

@@ -7,7 +7,7 @@ const validatorPlaceholderDataSchema = z.object({
   required: z.boolean().default(false),
 });
 
-export const ValidatorConfigSchema = z.object({
+export const validatorConfigSchema = z.object({
   name: z.string().min(1, { message: 'Validator name is required' }).optional(),
   description: z
     .string()
@@ -15,7 +15,7 @@ export const ValidatorConfigSchema = z.object({
     .optional(),
   placeholders: z
     .record(
-      z.string().regex(/^[a-zA-Z0-9_]+$/), // Placeholder name must be alphanumeric with underscores,
+      z.string().regex(/^[a-zA-Z0-9_-]+$/), // Placeholder name must be alphanumeric with underscores,
       validatorPlaceholderDataSchema,
     )
     .optional()
@@ -23,11 +23,14 @@ export const ValidatorConfigSchema = z.object({
   dependencies: z.record(z.string(), z.string()).optional(),
   devDependencies: z.record(z.string(), z.string()).optional(),
 });
-export type ValidatorConfig = z.infer<typeof ValidatorConfigSchema>;
+export type ValidatorConfig = z.infer<typeof validatorConfigSchema>;
+export type ValidatorPlaceholderDataSchema = z.infer<
+  typeof validatorPlaceholderDataSchema
+>;
 
 export class ValidatorProcessor {
   private validatorConfigs: ValidatorConfig;
-  notFoundPlaceholders: Map<string, boolean>;
+  private notFoundPlaceholders: Map<string, boolean>;
 
   constructor(configs: ValidatorConfig) {
     ValidatorProcessor.validateValidatorConfigs(configs);
@@ -46,7 +49,7 @@ export class ValidatorProcessor {
   private static async validateValidatorConfigs(
     validatorConfigs: ValidatorConfig,
   ) {
-    const parsed = ValidatorConfigSchema.safeParse(validatorConfigs);
+    const parsed = validatorConfigSchema.safeParse(validatorConfigs);
     if (parsed.error) {
       throw new Error(
         `${validatorConfigs.name ? `${validatorConfigs.name} validator` : 'Validator'} configs are not valid:\n${parsed.error.errors

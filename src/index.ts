@@ -4,6 +4,7 @@ import { version } from '../package.json'; // could check if this is of any secu
 import { welcome } from './features/welcome/welcome';
 import { generateCommand } from './features/generate/generate.command';
 import { addTemplateCommand } from './features/add_template/add_template.command';
+import { showTemplatesDirCommand } from 'features/show_templates_dir/show_templates_dir.command';
 
 const program = new Command();
 
@@ -20,6 +21,7 @@ program
 
 generateCommand(program);
 addTemplateCommand(program);
+showTemplatesDirCommand(program);
 
 program.parse(process.argv);
 

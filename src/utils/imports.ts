@@ -10,7 +10,7 @@ import {
 
 export async function importTemplate(templateName: string): Promise<string> {
   const { default: template } = await import(
-    `@/templates/${templateName}/${templateName}`
+    `../templates/${templateName}/${templateName}`
   );
   if (typeof template !== 'string') {
     throw new Error('Default export from template file must be a string');
@@ -23,7 +23,7 @@ export async function importTemplateConfigs(
   templateName: string,
 ): Promise<TemplateConfig> {
   const { default: templateConfigsFromJson } = await import(
-    `@/templates/${templateName}/${templateName}.config.json`
+    `../templates/${templateName}/${templateName}.config.json`
   );
   const parsed = TemplateConfigSchema.safeParse(templateConfigsFromJson);
   if (parsed.error) {
@@ -38,7 +38,7 @@ export async function importValidatorConfigs(
   validatorName: 'default' | (string & {}),
 ): Promise<ValidatorConfig> {
   const { default: validatorConfigsFromJson } = await import(
-    `@/templates/${templateName}/validators/${validatorName}.config.json`
+    `../templates/${templateName}/validators/${validatorName}.config.json`
   );
   const parsed = ValidatorConfigSchema.safeParse(validatorConfigsFromJson);
   if (parsed.error) {
@@ -62,7 +62,7 @@ export async function importTypesTemplate(
   templateName: string,
 ): Promise<string> {
   const { default: typesTemplate } = await import(
-    `@/templates/${templateName}/${templateName}.types`
+    `../templates/${templateName}/${templateName}.types`
   );
 
   if (typeof typesTemplate !== 'string') {

@@ -1,4 +1,3 @@
-import { Command } from 'commander';
 import { input, confirm } from '@inquirer/prompts';
 import * as fs from 'fs';
 import * as path from 'path';

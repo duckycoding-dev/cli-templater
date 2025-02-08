@@ -88,7 +88,7 @@ export class ValidatorProcessor {
   }
 
   /** Processes the given validator configs */
-  processValidator(rawTemplate: string, instance?: string) {
+  processValidator(rawTemplate: string) {
     this.checkPlaceholdersExistInTemplate(rawTemplate);
 
     // Process the validator configs

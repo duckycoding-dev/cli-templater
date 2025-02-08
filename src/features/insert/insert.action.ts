@@ -11,11 +11,11 @@ import {
   importTemplateConfigs,
   importValidatorConfigs,
 } from '../../utils/imports';
-import { formatEntityName, validateEntityNameInput } from '@/utils/entity';
-import { writeFileWithIncrementalName } from '@/utils/filesystem';
-import { thereIsAtLeastOneDependency } from '@/utils/processors';
-import { printWithHeadings } from '@/utils/logs';
-import { isValidDirectory } from '@/utils/strings';
+import { formatEntityName, validateEntityNameInput } from '../../utils/entity';
+import { writeFileWithIncrementalName } from '../../utils/filesystem';
+import { thereIsAtLeastOneDependency } from '../../utils/processors';
+import { printWithHeadings } from '../../utils/logs';
+import { isValidDirectory } from '../../utils/strings';
 
 export async function insertBoilerplateAction(
   commandLineOptions: Partial<

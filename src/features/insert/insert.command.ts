@@ -1,5 +1,5 @@
-import { insertBoilerplateAction } from '@/features/insert/insert.action';
-import { isValidDirectory } from '@/utils/strings';
+import { insertBoilerplateAction } from './insert.action';
+import { isValidDirectory } from '../../utils/strings';
 import type { Command } from 'commander';
 
 export const insertCommand = (program: Command) => {

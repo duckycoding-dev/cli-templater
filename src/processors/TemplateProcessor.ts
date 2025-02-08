@@ -8,7 +8,7 @@ import {
   normalizeCommas,
   removeMultipleEmptyLines,
   removeFirstNewline,
-} from '@/utils/strings';
+} from '../utils/strings';
 
 /*
  * These placeholders will always be handled by the template processor in a special way
@@ -399,12 +399,10 @@ export class TemplateProcessor {
     if (this.validatorProcessor) {
       this.rawTemplate = this.validatorProcessor?.processValidator(
         this.rawTemplate,
-        'main',
       );
       if (this.rawTypesTemplate) {
         this.rawTypesTemplate = this.validatorProcessor?.processValidator(
           this.rawTypesTemplate,
-          'types',
         );
       }
       this.validatorProcessor.alertOrThrowForMissingPlaceholders();

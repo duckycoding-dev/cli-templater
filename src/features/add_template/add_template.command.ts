@@ -1,4 +1,4 @@
-import { addTemplateAction } from '@/features/add_template/add_template.action';
+import { addTemplateAction } from './add_template.action';
 import type { Command } from 'commander';
 
 export const addTemplateCommand = (program: Command) => {

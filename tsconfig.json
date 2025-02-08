@@ -30,9 +30,6 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"]
-    },
     "declarationDir": "./dist",
     "declaration": true,
     "sourceMap": true,

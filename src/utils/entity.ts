@@ -3,7 +3,7 @@ import {
   containsOnlyLettersNumbersSpacesAndUnderscores,
   removeExtraSpaces,
   startsWithNumber,
-} from './strings';
+} from './strings.js';
 
 export function validateEntityNameInput(text: string, shouldThrow = false) {
   text = text.trim();

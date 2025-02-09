@@ -1,5 +1,5 @@
-import { generateBoilerplateAction } from './generate.action';
-import { isValidDirectory } from '../../utils/strings';
+import { generateBoilerplateAction } from './generate.action.js';
+import { isValidDirectory } from '../../utils/strings.js';
 import type { Command } from 'commander';
 
 export const generateCommand = (program: Command) => {

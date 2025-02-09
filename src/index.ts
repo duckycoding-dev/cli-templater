@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { version } from '../package.json'; // could check if this is of any security concern
-import { welcome } from './features/welcome/welcome';
-import { generateCommand } from './features/generate/generate.command';
-import { addTemplateCommand } from './features/add_template/add_template.command';
-import { showTemplatesDirCommand } from 'features/show_templates_dir/show_templates_dir.command';
+import packageJson from '../package.json' with { type: 'json' }; // could check if this is of any security concern
+import { welcome } from './features/welcome/welcome.js';
+import { generateCommand } from './features/generate/generate.command.js';
+import { addTemplateCommand } from './features/add_template/add_template.command.js';
+import { showTemplatesDirCommand } from './features/show_templates_dir/show_templates_dir.command.js';
 
 const program = new Command();
 
+const { version } = packageJson;
 if (process.argv.length === 2) {
   welcome(version);
 }

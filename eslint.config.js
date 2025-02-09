@@ -15,6 +15,7 @@ export default [
       'no-console': 'off',
       'no-unused-vars': 'off', // Disable the base rule and use the TypeScript version instead
       '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-import-type-side-effects': 'error',
     },
   },
 ];

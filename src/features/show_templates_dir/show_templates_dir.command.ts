@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import { showTemplatesDirAction } from './show_templates_dir.action';
+import { showTemplatesDirAction } from './show_templates_dir.action.js';
 
 export const showTemplatesDirCommand = (program: Command) => {
   return program

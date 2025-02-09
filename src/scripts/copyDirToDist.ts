@@ -1,5 +1,9 @@
 import fs from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = dirname(__filename); // get the name of the director
 
 function copyDirToDist(dirToCopy: string) {
   const startDir = resolve(__dirname, '..', dirToCopy);

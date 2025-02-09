@@ -6,16 +6,23 @@ import {
   TemplateProcessor,
   type ProcessingOptions,
   type TemplateConfig,
-} from '../../processors/TemplateProcessor';
+} from '../../processors/TemplateProcessor.js';
 import {
   importTemplateConfigs,
   importValidatorConfigs,
-} from '../../utils/imports';
-import { formatEntityName, validateEntityNameInput } from '../../utils/entity';
-import { writeFileWithIncrementalName } from '../../utils/filesystem';
-import { thereIsAtLeastOneDependency } from '../../utils/processors';
-import { printWithHeadings } from '../../utils/logs';
-import { isValidDirectory } from '../../utils/strings';
+} from '../../utils/imports.js';
+import {
+  formatEntityName,
+  validateEntityNameInput,
+} from '../../utils/entity.js';
+import { writeFileWithIncrementalName } from '../../utils/filesystem.js';
+import { thereIsAtLeastOneDependency } from '../../utils/processors.js';
+import { printWithHeadings } from '../../utils/logs.js';
+import { isValidDirectory } from '../../utils/strings.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the director
 
 export async function generateBoilerplateAction(
   commandLineOptions: Partial<

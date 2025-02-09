@@ -9,17 +9,20 @@ import {
   removeExtraSpaces,
   removeFirstNewline,
   removeMultipleEmptyLines,
-} from 'utils/strings';
+} from '../../utils/strings.js';
 import {
   DEFAULT_TEMPLATE_PLACEHOLDERS,
   type TemplateConfig,
   type TemplatePlaceholderSchema,
-} from 'processors/TemplateProcessor';
+} from '../../processors/TemplateProcessor.js';
 import type {
   ValidatorConfig,
   ValidatorPlaceholderDataSchema,
-} from 'processors/ValidatorProcessor';
+} from '../../processors/ValidatorProcessor.js';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
 const templatesDir = path.resolve(__dirname, '../../templates');
 
 export type AddTemplateOptions = {

@@ -1,14 +1,17 @@
 import { z } from 'zod';
 import pluralize from 'pluralize';
-import { importTemplate, importTypesTemplate } from '../utils/imports';
-import { ValidatorProcessor, type ValidatorConfig } from './ValidatorProcessor';
-import { validateEntityNameInput } from '../utils/entity';
+import { importTemplate, importTypesTemplate } from '../utils/imports.js';
+import {
+  ValidatorProcessor,
+  type ValidatorConfig,
+} from './ValidatorProcessor.js';
+import { validateEntityNameInput } from '../utils/entity.js';
 import ansis from 'ansis';
 import {
   normalizeCommas,
   removeMultipleEmptyLines,
   removeFirstNewline,
-} from '../utils/strings';
+} from '../utils/strings.js';
 
 /*
  * These placeholders will always be handled by the template processor in a special way
@@ -264,7 +267,7 @@ export class TemplateProcessor {
     );
     const formattedEntityCamelCase = formattedEntitySnakeCase.replace(
       /(_\w)/g,
-      (match) => match[1].toUpperCase(),
+      (match) => match?.at(1)?.toUpperCase() ?? '',
     );
     const formattedEntityPascalCase =
       formattedEntityCamelCase.charAt(0).toUpperCase() +

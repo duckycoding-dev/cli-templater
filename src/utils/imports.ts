@@ -1,12 +1,12 @@
 import {
   TemplateConfigSchema,
   type TemplateConfig,
-} from '../processors/TemplateProcessor';
+} from '../processors/TemplateProcessor.js';
 import ansis from 'ansis';
 import {
   validatorConfigSchema,
   type ValidatorConfig,
-} from '../processors/ValidatorProcessor';
+} from '../processors/ValidatorProcessor.js';
 
 export async function importTemplate(templateName: string): Promise<string> {
   const { default: template } = await import(

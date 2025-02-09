@@ -3,19 +3,27 @@
     // Enable latest features
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
 
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     // Bundler mode
-    "moduleResolution": "bundler",
-    // "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
+    // "moduleResolution": "bundler",
     // "noEmit": true,
+    "allowImportingTsExtensions": false,
+
+    // Library mode => we are building code as a library that can be run in any environment, so we need to be more strict
+    // we are not using a bundler because we want to keep a specific file structure so that the we can manage user created files
+    "moduleResolution": "nodenext",
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
 
     // Best practices
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "noFallthroughCasesInSwitch": true,
@@ -29,7 +37,6 @@
     "noImplicitAny": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
     "declarationMap": true,
     "declarationDir": "./dist",
     "declaration": true,

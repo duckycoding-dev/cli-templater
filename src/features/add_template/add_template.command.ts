@@ -1,11 +1,11 @@
 import {
   containsOnlyLettersAndNumbers,
   containsOnlyLettersNumbersUnderscoresAndDashes,
-} from 'utils/strings';
+} from '../../utils/strings.js';
 import {
   addTemplateAction,
   type AddTemplateOptions,
-} from './add_template.action';
+} from './add_template.action.js';
 import type { Command } from 'commander';
 
 export const addTemplateCommand = (program: Command) => {

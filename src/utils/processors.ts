@@ -1,5 +1,5 @@
-import type { TemplateConfig } from '../processors/TemplateProcessor';
-import type { ValidatorConfig } from '../processors/ValidatorProcessor';
+import type { TemplateConfig } from '../processors/TemplateProcessor.js';
+import type { ValidatorConfig } from '../processors/ValidatorProcessor.js';
 
 export function thereIsAtLeastOneDependency<
   T extends ValidatorConfig | TemplateConfig,

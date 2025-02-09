@@ -1,36 +1,28 @@
 {
   "name": "Hono REST API",
   "description": "A REST API template using Hono framework with validation support",
-  "validatorSupport": ["zod", "typebox"],
+  "validatorSupport": ["zod", "typebox", "validator"],
   "filename": "hono",
   "outputExtension": "ts",
   "typesFileOutputExtension": "ts",
-  "placeholders": [
-    {
-      "entity": {
-        "description": "The entity name",
-        "required": true
-      }
+  "placeholders": {
+    "entity": {
+      "description": "The entity name",
+      "required": true
     },
-    {
-      "Entity": {
-        "description": "The entity name PascalCase",
-        "required": true
-      }
+    "Entity": {
+      "description": "The entity name PascalCase",
+      "required": true
     },
-    {
-      "entities": {
-        "description": "The entity name as plural",
-        "required": true
-      }
+    "entities": {
+      "description": "The entity name as plural",
+      "required": true
     },
-    {
-      "types": {
-        "description": "Defines where types will be placed if they are not defined in a separate file",
-        "required": true
-      }
+    "types": {
+      "description": "Defines where types will be placed if they are not defined in a separate file",
+      "required": true
     }
-  ],
+  },
   "dependencies": {
     "hono": "^4.6.19"
   },

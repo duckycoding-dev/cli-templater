@@ -5,26 +5,20 @@
   "filename": "NAME_OF_THE_GENERATED_TEMPLATE_FILE",
   "outputExtension": "js",
   "typesFileOutputExtension": "ts",
-  "placeholders": [
-    {
-      "entity": {
-        "description": "The entity name",
-        "required": true
-      }
+  "placeholders": {
+    "entity": {
+      "description": "The entity name",
+      "required": true
     },
-    {
-      "Entity": {
-        "description": "The entity name PascalCase",
-        "required": true
-      }
+    "Entity": {
+      "description": "The entity name PascalCase",
+      "required": true
     },
-    {
-      "optionalPlaceholder": {
-        "description": "Example of a placeholder that is not required - could be marked as required later",
-        "required": false
-      }
+    "optionalPlaceholder": {
+      "description": "Example of a placeholder that is not required - could be marked as required later",
+      "required": false
     }
-  ],
+  },
   "dependencies": {
     "PACKAGEJSON_DEP": "SEMVER_VERSION"
   },

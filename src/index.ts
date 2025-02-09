@@ -9,16 +9,17 @@ import { showTemplatesDirCommand } from './features/show_templates_dir/show_temp
 const program = new Command();
 
 const { version } = packageJson;
-if (process.argv.length === 2) {
-  welcome(version);
-}
 
 program
   .name('cli-templater')
   .description(
     'Interactive CLI tool that aids in setting up repetitive files with a common structure',
   )
-  .version(version);
+  .version(version)
+  .action(() => {
+    welcome(version);
+    program.help();
+  });
 
 generateCommand(program);
 addTemplateCommand(program);

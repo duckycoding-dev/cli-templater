@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import packageJson from '../package.json' with { type: 'json' }; // could check if this is of any security concern
 import { welcome } from './features/welcome/welcome.js';
 import { generateCommand } from './features/generate/generate.command.js';
 import { addTemplateCommand } from './features/add_template/add_template.command.js';
@@ -8,16 +7,14 @@ import { showTemplatesDirCommand } from './features/show_templates_dir/show_temp
 
 const program = new Command();
 
-const { version } = packageJson;
-
 program
   .name('cli-templater')
   .description(
     'Interactive CLI tool that aids in setting up repetitive files with a common structure',
   )
-  .version(version)
+  .version('1.0.0')
   .action(() => {
-    welcome(version);
+    welcome('1.0.0');
     program.help();
   });
 

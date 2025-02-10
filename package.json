@@ -23,12 +23,8 @@
     "ansis": "^3.9.0",
     "commander": "^13.1.0",
     "figlet": "^1.8.0",
-    "npm": "^11.0.0",
     "pluralize": "^8.0.0",
-    "prettier": "^3.4.2",
-    "@hono/zod-validator": "^0.4.2",
-    "hono": "^4.6.19",
-    "zod": "^3.24.1"
+    "prettier": "^3.4.2"
   },
   "bin": {
     "cli-templater": "dist/index.js"
